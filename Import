@@ -10,13 +10,14 @@ Private Sub CommandButton1_Click()
     Dim nextRowA As Long, nextRowB As Long
     Dim wordsArray() As String
     Dim firstNameLastName As String
+    Dim remainingText As String
 
     ' Prompt for the file name
     fileName = InputBox("Enter the name of the text file:", "File Name")
     If fileName = "" Then Exit Sub ' If no file name is entered, exit
 
     ' Set the directory path (you can modify this to the directory you want)
-    directoryPath = "C:\Users\jbennett\Desktop\Test\" ' Replace with your directory path
+    directoryPath = "C:\Users\Desktop\Test\" ' Replace with your directory path
 
     ' Construct the full file path
     filePath = directoryPath & fileName & ".txt"
@@ -54,6 +55,19 @@ Private Sub CommandButton1_Click()
             If position1 > 0 Then
                 ws.Cells(nextRowA, 1).Value = Mid(textLine, position1 + Len(keyword1), charCount1)
                 nextRowA = nextRowA + 1
+
+                ' Check for Keyword 2 in the same line after finding Keyword 1
+                position2 = InStr(textLine, keyword2)
+                If position2 > 0 Then
+                    ' If Keyword 2 is found, skip further processing for this line
+                Else
+                    ' If Keyword 2 is not found, copy the rest of the line (minus Keyword 1 part) to Column B
+                    remainingText = Mid(textLine, position1 + Len(keyword1))
+                    ws.Cells(nextRowB, 2).Value = Trim(remainingText)
+                    nextRowB = nextRowB + 1
+                End If
+
+                ' Update position1 to search for the next occurrence of Keyword 1
                 position1 = position1 + Len(keyword1) + charCount1
             End If
         Loop
@@ -67,15 +81,19 @@ Private Sub CommandButton1_Click()
                 remainingText = Mid(textLine, position2 + Len(keyword2))
                 remainingText = Trim(remainingText)
 
-                ' Split the remaining text into words and take the first two (assumes first name and last name)
+                ' Split the remaining text into words and concatenate all words
                 wordsArray = Split(remainingText, " ")
-                If UBound(wordsArray) >= 1 Then
-                    firstNameLastName = wordsArray(0) & " " & wordsArray(1)
-                    ws.Cells(nextRowB, 2).Value = firstNameLastName
-                End If
+
+                firstNameLastName = wordsArray(0)
+                Dim i As Integer
+                For i = 1 To UBound(wordsArray)
+                    firstNameLastName = firstNameLastName & " " & wordsArray(i)
+                Next i
+
+                ws.Cells(nextRowB, 2).Value = firstNameLastName
 
                 nextRowB = nextRowB + 1
-                position2 = position2 + Len(keyword2) + Len(wordsArray(0)) + Len(wordsArray(1)) + 2 ' Move position to continue search
+                position2 = position2 + Len(keyword2) + Len(firstNameLastName) ' Move position to continue search
             End If
         Loop
 
