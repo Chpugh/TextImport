@@ -1,0 +1,101 @@
+Private Sub CommandButton2_Click()
+    Dim fileName As String
+    Dim filePath As String
+    Dim directoryPath As String
+    Dim textLine As String
+    Dim ws As Worksheet
+    Dim nextRowC As Long
+    Dim lastShares As String
+    Dim pos As Integer
+    Dim i As Integer
+    Dim lines() As String
+    Dim currentLine As Long
+    Dim foundConfidential As Boolean
+    Dim currentIndex As Long
+    
+    ' Prompt for the file name
+    fileName = InputBox("Enter the name of the text file:", "File Name")
+    If fileName = "" Then Exit Sub ' If no file name is entered, exit
+
+    ' Set the directory path (you can modify this to the directory you want)
+    directoryPath = "C:\Users\Desktop\Test\" ' Replace with your directory path
+
+    ' Construct the full file path
+    filePath = directoryPath & fileName & ".txt"
+
+    ' Check if the file exists
+    If Dir(filePath) = "" Then
+        MsgBox "File not found. Please check the file name and try again.", vbExclamation
+        Exit Sub
+    End If
+
+    ' Set the worksheet to place data
+    Set ws = ThisWorkbook.Sheets("Sheet1")
+
+    ' Check if column C is empty and determine the next row
+    If WorksheetFunction.CountA(ws.Columns(3)) = 0 Then
+        nextRowC = 1
+    Else
+        nextRowC = ws.Cells(ws.Rows.Count, 3).End(xlUp).Row + 1
+    End If
+
+    ' Open the text file and read all lines into an array
+    Open filePath For Input As #1
+    textLine = Input(LOF(1), #1)
+    Close #1
+
+    ' Split the file into lines
+    lines = Split(textLine, vbCrLf)
+    currentLine = UBound(lines)
+    
+    ' Process each line from the end of the file to the beginning
+    Do While currentLine >= 0
+        textLine = lines(currentLine)
+        
+        ' Check if the line contains "Confidential"
+        If InStr(textLine, "Confidential") > 0 Then
+            foundConfidential = True
+            currentIndex = currentLine - 1
+
+            ' Start processing the lines before "Confidential"
+            Do While currentIndex >= 0
+                textLine = lines(currentIndex)
+                
+                ' Check if the line contains "Shares"
+                If InStr(textLine, "Shares") > 0 Then
+                    pos = InStr(textLine, "Shares")
+                    lastShares = ""
+
+                    ' Loop backwards from the position of "Shares" to find the number before it
+                    For i = pos - 1 To 1 Step -1
+                        If IsNumeric(Mid(textLine, i, 1)) Then
+                            lastShares = Mid(textLine, i, 1) & lastShares
+                        ElseIf Len(lastShares) > 0 Then
+                            Exit For ' Exit loop once the number is fully extracted
+                        End If
+                    Next i
+
+                    ' Record the value
+                    If lastShares <> "" Then
+                        ws.Cells(nextRowC, 3).Value = lastShares
+                        nextRowC = nextRowC + 1
+                    End If
+
+                    ' Exit after finding and recording the relevant data before the next "Confidential"
+                    Exit Do
+                End If
+
+                ' Move to the previous line
+                currentIndex = currentIndex - 1
+            Loop
+            
+            ' Reset the flag after processing one block
+            foundConfidential = False
+        End If
+
+        ' Move to the previous line
+        currentLine = currentLine - 1
+    Loop
+
+    MsgBox "Processing complete. The numbers before 'Shares' before each 'Confidential' entry have been recorded in Column C."
+End Sub
