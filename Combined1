@@ -1,0 +1,173 @@
+Private Sub CommandButton1_Click()
+    Dim fileName As String
+    Dim filePath As String
+    Dim directoryPath As String
+    Dim textLine As String
+    Dim keyword1 As String, keyword2 As String
+    Dim charCount1 As Integer
+    Dim position1 As Integer, position2 As Integer
+    Dim ws As Worksheet
+    Dim nextRowA As Long, nextRowB As Long, nextRowC As Long
+    Dim wordsArray() As String
+    Dim firstNameLastName As String
+    Dim remainingText As String
+    Dim lastShares As String
+    Dim pos As Integer
+    Dim i As Integer
+    Dim lines() As String
+    Dim currentLine As Long
+    Dim foundConfidential As Boolean
+    Dim currentIndex As Long
+
+    ' Prompt for the file name
+    fileName = InputBox("Enter the name of the text file:", "File Name")
+    Debug.Print "File name entered: " & fileName
+    If fileName = "" Then
+        Debug.Print "No file name entered. Exiting sub."
+        Exit Sub
+    End If
+
+    ' Set the directory path (you can modify this to the directory you want)
+    directoryPath = "C:\Users\pughc\Desktop\VBAPractice\" ' Replace with your directory path
+    Debug.Print "Directory path: " & directoryPath
+
+    ' Construct the full file path
+    filePath = directoryPath & fileName & ".txt"
+    Debug.Print "Full file path: " & filePath
+
+    ' Check if the file exists
+    If Dir(filePath) = "" Then
+        MsgBox "File not found. Please check the file name and try again.", vbExclamation
+        Debug.Print "File not found. Exiting sub."
+        Exit Sub
+    End If
+
+    ' Set the worksheet to place data
+    Set ws = ThisWorkbook.Sheets("Sheet1")
+    Debug.Print "Worksheet set to 'Sheet1'."
+
+    ' Find the first empty rows in columns A, B, and C
+    nextRowA = ws.Cells(ws.Rows.Count, 1).End(xlUp).Row + 1
+    nextRowB = ws.Cells(ws.Rows.Count, 2).End(xlUp).Row + 1
+    nextRowC = ws.Cells(ws.Rows.Count, 3).End(xlUp).Row + 1
+
+    ' Set the keywords and character count to search for
+    keyword1 = "Acct/Pt."  ' Replace with your first keyword
+    charCount1 = 16        ' Set the number of characters to extract after the first keyword
+
+    keyword2 = "UPAL -"    ' Replace with your second keyword
+
+    ' Open the text file and read all lines into an array
+    Open filePath For Input As #1
+    textLine = Input(LOF(1), #1)
+    Close #1
+    Debug.Print "File content read successfully."
+
+    ' Split the file into lines
+    lines = Split(textLine, vbCrLf)
+    Debug.Print "File split into " & UBound(lines) - LBound(lines) + 1 & " lines."
+
+    ' Process each line from the beginning of the file to the end
+    For currentLine = LBound(lines) To UBound(lines)
+        textLine = lines(currentLine)
+        Debug.Print "Processing line " & currentLine + 1 & ": " & textLine
+
+        ' Search for all instances of the first keyword in the line
+        position1 = 1
+        Do While position1 > 0
+            position1 = InStr(position1, textLine, keyword1)
+            If position1 > 0 Then
+                ws.Cells(nextRowA, 1).Value = Mid(textLine, position1 + Len(keyword1), charCount1)
+                nextRowA = nextRowA + 1
+
+                ' Check for Keyword 2 in the same line after finding Keyword 1
+                position2 = InStr(position1 + Len(keyword1), textLine, keyword2)
+                If position2 > 0 Then
+                    ' If Keyword 2 is found, skip further processing for this line
+                Else
+                    ' If Keyword 2 is not found, copy the rest of the line (after the first keyword1 and the 16 characters) to Column B
+                    remainingText = Mid(textLine, position1 + Len(keyword1) + charCount1)
+                    ws.Cells(nextRowB, 2).Value = Trim(remainingText)
+                    nextRowB = nextRowB + 1
+                End If
+                ' Update position1 to search for the next occurrence of Keyword 1
+                position1 = position1 + Len(keyword1) + charCount1
+            End If
+        Loop
+
+        ' Search for all instances of the second keyword in the line
+        position2 = 1
+        Do While position2 > 0
+            position2 = InStr(position2, textLine, keyword2)
+            If position2 > 0 Then
+                ' Extract the text after the keyword
+                remainingText = Mid(textLine, position2 + Len(keyword2))
+                remainingText = Trim(remainingText)
+
+                ' Split the remaining text into words and concatenate all words
+                wordsArray = Split(remainingText, " ")
+
+                firstNameLastName = wordsArray(0)
+                For i = 1 To UBound(wordsArray)
+                    firstNameLastName = firstNameLastName & " " & wordsArray(i)
+                Next i
+
+                ws.Cells(nextRowB, 2).Value = firstNameLastName
+
+                nextRowB = nextRowB + 1
+                position2 = position2 + Len(keyword2) + Len(firstNameLastName) ' Move position to continue search
+            End If
+        Loop
+
+        ' Check if the line contains "Confidential"
+        If InStr(textLine, "Confidential") > 0 Then
+            Debug.Print "'Confidential' found at line " & currentLine + 1
+            foundConfidential = True
+            currentIndex = currentLine - 1
+
+            ' Start processing the lines after "Confidential"
+            Do While currentIndex <= UBound(lines)
+                textLine = lines(currentIndex)
+                Debug.Print "Processing line " & currentIndex + 1 & " after 'Confidential': " & textLine
+
+                ' Check if the line contains "Shares"
+                If InStr(textLine, "Shares") > 0 Then
+                    pos = InStr(textLine, "Shares")
+                    Debug.Print "'Shares' found at line " & currentIndex + 1 & " at position " & pos
+                    lastShares = ""
+
+                    ' Loop backwards from the position of "Shares" to find the number before it
+                    For i = pos - 1 To 1 Step -1
+                        If IsNumeric(Mid(textLine, i, 1)) Or Mid(textLine, i, 1) = "." Then
+                            lastShares = Mid(textLine, i, 1) & lastShares
+                        ElseIf Len(lastShares) > 0 Then
+                            Exit For ' Exit loop once the number is fully extracted
+                        End If
+                    Next i
+
+                    Debug.Print "Extracted number before 'Shares': " & lastShares
+
+                    ' Record the value
+                    If lastShares <> "" Then
+                        ws.Cells(nextRowC, 3).Value = lastShares
+                        Debug.Print "Recorded '" & lastShares & "' in Column C at row " & nextRowC
+                        nextRowC = nextRowC + 1
+                    End If
+
+                    ' Exit after finding and recording the relevant data after the first "Confidential"
+                    Exit Do
+                End If
+
+                ' Move to the next line
+                currentIndex = currentIndex + 1
+            Loop
+            
+            ' Reset the flag after processing one block
+            foundConfidential = False
+        End If
+    Next currentLine
+
+    MsgBox "Processing complete."
+    Debug.Print "Processing complete."
+End Sub
+
