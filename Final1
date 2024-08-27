@@ -107,20 +107,40 @@ Private Sub CommandButton3_Click()
             End If
         Loop
 
-        ' *** Handle Shares Processing ***
-        If InStr(1, textLine, "Shares", vbTextCompare) > 0 Then
-            ' Find the position of "Shares"
-            sharesPosition = InStr(1, textLine, "Shares", vbTextCompare)
-            
-            ' Extract up to 7 characters before "Shares"
-            tempString = Trim(Mid(textLine, sharesPosition - 7, 7))
+' *** Handle Shares Processing ***
+If InStr(1, textLine, "Shares", vbTextCompare) > 0 Then
+    ' Find the position of "Shares"
+    sharesPosition = InStr(1, textLine, "Shares", vbTextCompare)
+    
+    ' Initialize an empty string to build the number
+    numString = ""
+    
+    ' Loop backward from sharesPosition to extract the number
+    i = sharesPosition - 1
+    Do While i > 0
+        Dim currentChar As String
+        currentChar = Mid(textLine, i, 1)
         
-            ' Check if extracted string is numeric
-            If IsNumeric(tempString) Then
-                lastShares = tempString ' Update lastShares to the most recent valid number
-                Debug.Print "Found Shares value: "; lastShares ' Debugging: Print the last shares value found
-            End If
+        ' Check if the character is a digit, decimal point, or comma
+        If currentChar Like "[0-9.]" Or currentChar = "," Then
+            numString = currentChar & numString
+        ElseIf Len(numString) > 0 Then
+            ' Stop if a non-numeric character is encountered after finding digits
+            Exit Do
         End If
+        
+        i = i - 1
+    Loop
+    
+    ' Remove any commas from the number string
+    numString = Replace(numString, ",", "")
+    
+    ' Check if the extracted string is numeric
+    If IsNumeric(numString) Then
+        lastShares = numString ' Store the found number
+        Debug.Print "Found Shares value: "; lastShares ' Debugging: Print the found number
+    End If
+End If
 
         ' *** Handle Confidential Processing ***
         If InStr(1, Trim(textLine), "Confidential", vbTextCompare) > 0 Then
