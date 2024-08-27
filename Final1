@@ -23,7 +23,7 @@ Private Sub CommandButton3_Click()
     If fileName = "" Then Exit Sub ' If no file name is entered, exit
 
     ' Set the directory path (modify this to the directory you want)
-    directoryPath = "C:\Users\jbennett\Desktop\Test\" ' Replace with your directory path
+    directoryPath = "C:\Users\Desktop\Test\" ' Replace with your directory path
 
     ' Construct the full file path
     filePath = directoryPath & fileName & ".txt"
