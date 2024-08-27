@@ -1,0 +1,37 @@
+Sub MapValuesToColumnB()
+    Dim ws As Worksheet
+    Dim lastRow As Long
+    Dim i As Long
+    Dim valueInA As String
+    Dim valueInB As String
+
+    ' Set the worksheet to work on (modify if necessary)
+    Set ws = ThisWorkbook.Sheets("Sheet1")
+    
+    ' Find the last row with data in Column A
+    lastRow = ws.Cells(ws.Rows.Count, 1).End(xlUp).Row
+    
+    ' Loop through each cell in Column A from row 1 to lastRow
+    For i = 1 To lastRow
+        ' Get the value in Column A
+        valueInA = ws.Cells(i, 1).Value
+        
+        ' Determine the corresponding value to place in Column B
+        Select Case valueInA
+            Case "Apple"
+                valueInB = "Fruit"
+            Case "Carrot"
+                valueInB = "Vegetable"
+            Case "Chicken"
+                valueInB = "Meat"
+            ' Add more cases as needed
+            Case Else
+                valueInB = "Other" ' Default value if no match is found
+        End Select
+        
+        ' Paste the value in Column B
+        ws.Cells(i, 2).Value = valueInB
+    Next i
+    
+    MsgBox "Values have been mapped to Column B.", vbInformation
+End Sub
