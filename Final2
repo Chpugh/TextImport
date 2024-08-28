@@ -8,7 +8,7 @@ Private Sub CommandButton3_Click()
     Dim keyword1 As String, keyword2 As String
     Dim charCount1 As Integer
     Dim position1 As Integer, position2 As Integer
-    Dim ws As Worksheet, sourceWs As Worksheet, dataSheet As Worksheet
+    Dim ws As Worksheet, dataSheet As Worksheet
     Dim nextRowA As Long, nextRowB As Long, nextRowC As Long, nextRowD As Long
     Dim wordsArray() As String
     Dim firstNameLastName As String
@@ -17,9 +17,9 @@ Private Sub CommandButton3_Click()
     Dim sharesPosition As Integer
     Dim acctValue As String
     Dim numString As String
-    Dim lookupRange As Range, searchRange As Range
-    Dim cell As Range, foundCell As Range
-    Dim keyword As String, resultValue As Variant
+    Dim lookupRange As Range
+    Dim foundCell As Range
+    Dim resultValue As Variant
     
     ' Prompt for the file name
     fileName = InputBox("Enter the name of the text file:", "File Name")
@@ -61,7 +61,7 @@ Private Sub CommandButton3_Click()
     Set dataSheet = Workbooks.Open("C:\Users\pughc\Desktop\VBAPractice\exampleData.xlsx").Sheets("Sheet1")
 
     ' Set the range to search for ACCT values in the data file
-    Set lookupRange = dataSheet.Range("B2:B" & dataSheet.Cells(dataSheet.Rows.Count, "B").End(xlUp).Row)
+    Set lookupRange = dataSheet.Range("B2:B63") ' Set to B2:B63 as requested
 
     ' Read through the text file line by line
     Do Until EOF(1)
@@ -75,17 +75,16 @@ Private Sub CommandButton3_Click()
             If position1 > 0 Then
                 acctValue = Trim(Mid(textLine, position1 + Len(keyword1), charCount1))
                 ws.Cells(nextRowA, 1).Value = acctValue
-                nextRowA = nextRowA + 1
-
+                
                 ' Look up ACCT value in the Data File and import corresponding data into Column B
                 Set foundCell = lookupRange.Find(acctValue, LookIn:=xlValues, LookAt:=xlWhole)
                 If Not foundCell Is Nothing Then
-                    resultValue = foundCell.Offset(0, 6).Value ' Pull data from column H (6 columns to the right)
-                    ws.Cells(nextRowB, 2).Value = resultValue
+                    resultValue = foundCell.Offset(0, 6).Value ' Pull data from column H (6 columns to the right of Column B)
+                    ws.Cells(nextRowA, 2).Value = resultValue
                 Else
-                    ws.Cells(nextRowB, 2).Value = "Not Found"
+                    ws.Cells(nextRowA, 2).Value = "Not Found"
                 End If
-                nextRowB = nextRowB + 1
+                nextRowA = nextRowA + 1
 
                 ' Check for Keyword 2 in the same line after finding Keyword 1
                 position2 = InStr(position1 + Len(keyword1), textLine, keyword2)
@@ -186,4 +185,3 @@ Private Sub CommandButton3_Click()
     MsgBox "Parsing complete. All relevant data has been recorded in Columns A, B, C, and D."
 
 End Sub
-
