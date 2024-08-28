@@ -1,4 +1,4 @@
-Sub ImportCorrespondingValue()
+Sub ImportCorrespondingValueFromAnotherWorkbook()
     Dim wsSource As Worksheet
     Dim wsDestination As Worksheet
     Dim lastRowSource As Long
@@ -6,10 +6,20 @@ Sub ImportCorrespondingValue()
     Dim destCell As Range
     Dim foundCell As Range
     Dim keyword As String
+    Dim sourceWorkbook As Workbook
+    Dim sourceFilePath As String
 
-    ' Set worksheets
-    Set wsSource = ThisWorkbook.Sheets("SourceSheet") ' Change to your source sheet name
+    ' Set the destination worksheet (the one you're working in)
     Set wsDestination = ThisWorkbook.Sheets("DestinationSheet") ' Change to your destination sheet name
+
+    ' Specify the file path of the source workbook
+    sourceFilePath = "C:\Path\To\Your\SourceWorkbook.xlsx" ' Change to the full path of your source workbook
+
+    ' Open the source workbook
+    Set sourceWorkbook = Workbooks.Open(sourceFilePath)
+
+    ' Set the source worksheet (in the external workbook)
+    Set wsSource = sourceWorkbook.Sheets("SourceSheet") ' Change to your source sheet name
 
     ' Find the last row in both sheets
     lastRowSource = wsSource.Cells(wsSource.Rows.Count, "B").End(xlUp).Row
@@ -27,5 +37,8 @@ Sub ImportCorrespondingValue()
             destCell.Offset(0, 1).Value = wsSource.Cells(foundCell.Row, "H").Value
         End If
     Next destCell
+
+    ' Close the source workbook without saving changes
+    sourceWorkbook.Close SaveChanges:=False
 
 End Sub
