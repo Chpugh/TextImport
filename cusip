@@ -1,0 +1,31 @@
+Sub ImportCorrespondingValue()
+    Dim wsSource As Worksheet
+    Dim wsDestination As Worksheet
+    Dim lastRowSource As Long
+    Dim lastRowDest As Long
+    Dim destCell As Range
+    Dim foundCell As Range
+    Dim keyword As String
+
+    ' Set worksheets
+    Set wsSource = ThisWorkbook.Sheets("SourceSheet") ' Change to your source sheet name
+    Set wsDestination = ThisWorkbook.Sheets("DestinationSheet") ' Change to your destination sheet name
+
+    ' Find the last row in both sheets
+    lastRowSource = wsSource.Cells(wsSource.Rows.Count, "B").End(xlUp).Row
+    lastRowDest = wsDestination.Cells(wsDestination.Rows.Count, "A").End(xlUp).Row
+
+    ' Loop through each cell in column A of the destination sheet
+    For Each destCell In wsDestination.Range("A1:A" & lastRowDest)
+        keyword = destCell.Value
+
+        ' Look for the keyword in column B of the source sheet
+        Set foundCell = wsSource.Range("B1:B" & lastRowSource).Find(What:=keyword, LookIn:=xlValues, LookAt:=xlWhole)
+
+        If Not foundCell Is Nothing Then
+            ' If found, import the value from the corresponding column H into column B of the destination sheet
+            destCell.Offset(0, 1).Value = wsSource.Cells(foundCell.Row, "H").Value
+        End If
+    Next destCell
+
+End Sub
