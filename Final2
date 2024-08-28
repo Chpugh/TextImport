@@ -1,0 +1,189 @@
+Private Sub CommandButton3_Click()
+
+    ' Declare variables
+    Dim fileName As String
+    Dim filePath As String
+    Dim directoryPath As String
+    Dim textLine As String
+    Dim keyword1 As String, keyword2 As String
+    Dim charCount1 As Integer
+    Dim position1 As Integer, position2 As Integer
+    Dim ws As Worksheet, sourceWs As Worksheet, dataSheet As Worksheet
+    Dim nextRowA As Long, nextRowB As Long, nextRowC As Long, nextRowD As Long
+    Dim wordsArray() As String
+    Dim firstNameLastName As String
+    Dim remainingText As String
+    Dim lastShares As String
+    Dim sharesPosition As Integer
+    Dim acctValue As String
+    Dim numString As String
+    Dim lookupRange As Range, searchRange As Range
+    Dim cell As Range, foundCell As Range
+    Dim keyword As String, resultValue As Variant
+    
+    ' Prompt for the file name
+    fileName = InputBox("Enter the name of the text file:", "File Name")
+    If fileName = "" Then Exit Sub ' If no file name is entered, exit
+
+    ' Set the directory path (modify this to the directory you want)
+    directoryPath = "C:\Users\pughc\Desktop\VBAPractice\" ' Replace with your directory path
+
+    ' Construct the full file path
+    filePath = directoryPath & fileName & ".txt"
+
+    ' Check if the file exists
+    If Dir(filePath) = "" Then
+        MsgBox "File not found. Please check the file name and try again.", vbExclamation
+        Exit Sub
+    End If
+
+    ' Set the keywords and character count to search for
+    keyword1 = "Acct/Pt."  ' Replace with your first keyword
+    charCount1 = 16        ' Set the number of characters to extract after the first keyword
+    keyword2 = "UPAL -"    ' Replace with your second keyword
+
+    ' Set the worksheet to place data
+    Set ws = ThisWorkbook.Sheets("Sheet1")
+
+    ' Find the first empty rows in columns A, B, C, and D
+    nextRowA = ws.Cells(ws.Rows.Count, 1).End(xlUp).Row + 1
+    nextRowB = ws.Cells(ws.Rows.Count, 2).End(xlUp).Row + 1
+    nextRowC = ws.Cells(ws.Rows.Count, 3).End(xlUp).Row + 1
+    nextRowD = ws.Cells(ws.Rows.Count, 4).End(xlUp).Row + 1
+
+    ' Open the text file
+    Open filePath For Input As #1
+
+    ' Initialize lastShares as an empty string
+    lastShares = ""
+
+    ' Open the Data File containing the lookup data (modify path as needed)
+    Set dataSheet = Workbooks.Open("C:\Users\pughc\Desktop\VBAPractice\exampleData.xlsx").Sheets("Sheet1")
+
+    ' Set the range to search for ACCT values in the data file
+    Set lookupRange = dataSheet.Range("B2:B" & dataSheet.Cells(dataSheet.Rows.Count, "B").End(xlUp).Row)
+
+    ' Read through the text file line by line
+    Do Until EOF(1)
+        Line Input #1, textLine
+        Debug.Print "Reading Line: "; textLine ' Debugging: Print each line read
+
+        ' *** Handle Keyword1 Processing ***
+        position1 = 1
+        Do While position1 > 0
+            position1 = InStr(position1, textLine, keyword1)
+            If position1 > 0 Then
+                acctValue = Trim(Mid(textLine, position1 + Len(keyword1), charCount1))
+                ws.Cells(nextRowA, 1).Value = acctValue
+                nextRowA = nextRowA + 1
+
+                ' Look up ACCT value in the Data File and import corresponding data into Column B
+                Set foundCell = lookupRange.Find(acctValue, LookIn:=xlValues, LookAt:=xlWhole)
+                If Not foundCell Is Nothing Then
+                    resultValue = foundCell.Offset(0, 6).Value ' Pull data from column H (6 columns to the right)
+                    ws.Cells(nextRowB, 2).Value = resultValue
+                Else
+                    ws.Cells(nextRowB, 2).Value = "Not Found"
+                End If
+                nextRowB = nextRowB + 1
+
+                ' Check for Keyword 2 in the same line after finding Keyword 1
+                position2 = InStr(position1 + Len(keyword1), textLine, keyword2)
+                If position2 > 0 Then
+                    ' If Keyword 2 is found, skip further processing for this line
+                Else
+                    ' If Keyword 2 is not found, copy the rest of the line (after the first keyword1 and the 16 characters) to Column C
+                    remainingText = Mid(textLine, position1 + Len(keyword1) + charCount1)
+                    ws.Cells(nextRowC, 3).Value = Trim(remainingText)
+                    nextRowC = nextRowC + 1
+                End If
+
+                ' Update position1 to search for the next occurrence of Keyword 1
+                position1 = position1 + Len(keyword1) + charCount1
+            End If
+        Loop
+
+        ' *** Handle Keyword2 Processing ***
+        position2 = 1
+        Do While position2 > 0
+            position2 = InStr(position2, textLine, keyword2)
+            If position2 > 0 Then
+                ' Extract the text after the keyword
+                remainingText = Mid(textLine, position2 + Len(keyword2))
+                remainingText = Trim(remainingText)
+
+                ' Split the remaining text into words and concatenate all words
+                wordsArray = Split(remainingText, " ")
+                firstNameLastName = wordsArray(0)
+                Dim i As Integer
+                For i = 1 To UBound(wordsArray)
+                    firstNameLastName = firstNameLastName & " " & wordsArray(i)
+                Next i
+
+                ws.Cells(nextRowC, 3).Value = firstNameLastName ' Place the name in Column C
+                nextRowC = nextRowC + 1
+                position2 = position2 + Len(keyword2) + Len(firstNameLastName) ' Move position to continue search
+            End If
+        Loop
+
+        ' *** Handle Shares Processing ***
+        If InStr(1, textLine, "Shares", vbTextCompare) > 0 Then
+            ' Find the position of "Shares"
+            sharesPosition = InStr(1, textLine, "Shares", vbTextCompare)
+            
+            ' Initialize an empty string to build the number
+            numString = ""
+            
+            ' Loop backward from sharesPosition to extract the number
+            i = sharesPosition - 1
+            Do While i > 0
+                Dim currentChar As String
+                currentChar = Mid(textLine, i, 1)
+                
+                ' Check if the character is a digit, decimal point, or comma
+                If currentChar Like "[0-9.]" Or currentChar = "," Then
+                    numString = currentChar & numString
+                ElseIf Len(numString) > 0 Then
+                    ' Stop if a non-numeric character is encountered after finding digits
+                    Exit Do
+                End If
+                
+                i = i - 1
+            Loop
+            
+            ' Remove any commas from the number string
+            numString = Replace(numString, ",", "")
+            
+            ' Check if the extracted string is numeric
+            If IsNumeric(numString) Then
+                lastShares = numString ' Store the found number
+                Debug.Print "Found Shares value: "; lastShares ' Debugging: Print the found number
+            End If
+        End If
+
+        ' *** Handle Confidential Processing ***
+        If InStr(1, Trim(textLine), "Confidential", vbTextCompare) > 0 Then
+            Debug.Print "Found Confidential: "; textLine ' Debugging: Print when "Confidential" is found
+            ' If "Confidential" is found, write the last "Shares" value to Excel in Column D
+            If lastShares <> "" Then
+                ws.Cells(nextRowD, 4).Value = CDbl(lastShares)
+                Debug.Print "Writing to Excel: "; lastShares ' Debugging: Print what is being written to Excel
+                nextRowD = nextRowD + 1
+            End If
+
+            ' Reset lastShares after writing to Excel to ensure the next "Confidential" gets a new set
+            lastShares = "" ' Make sure we reset it here after writing
+        End If
+
+    Loop
+
+    ' Close the text file
+    Close #1
+
+    ' Close the data workbook
+    dataSheet.Parent.Close SaveChanges:=False
+
+    MsgBox "Parsing complete. All relevant data has been recorded in Columns A, B, C, and D."
+
+End Sub
+
