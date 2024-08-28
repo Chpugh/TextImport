@@ -26,18 +26,15 @@ Sub MatchAndCopyDataFromOtherWorkbook()
 
     ' Loop through each cell in column A of the current sheet
     For Each currentCell In wsCurrent.Range("A1:A" & lastRowCurrent)
-        ' Trim any leading or trailing spaces from the value
-        keyword = Trim(currentCell.Value)
-        
-        ' Search for the trimmed keyword in column B of the data sheet
-        Set matchCell = wsData.Range("B1:B" & lastRowData).Find(What:=keyword, LookIn:=xlValues, LookAt:=xlWhole, MatchCase:=False)
+        ' Search for the current cell's value in column B of the data sheet
+        Set matchCell = wsData.Range("B1:B" & lastRowData).Find(What:=currentCell.Value, LookIn:=xlValues, LookAt:=xlWhole)
 
         If Not matchCell Is Nothing Then
             ' If a match is found, copy the value from column H in the data sheet to column B in the current sheet
             currentCell.Offset(0, 1).Value = wsData.Cells(matchCell.Row, "H").Value
         Else
             ' If no match is found, optionally leave the cell in column B blank or add a message
-            currentCell.Offset(0, 1).Value = "Not Found"
+            currentCell.Offset(0, 1).Value = "Not Found" ' Optional: change this as needed
         End If
     Next currentCell
 
