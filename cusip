@@ -1,47 +1,44 @@
-Sub ImportDataFromAnotherWorkbook()
-    Dim wsSource As Worksheet
-    Dim wsDestination As Worksheet
-    Dim lastRowSource As Long
-    Dim lastRowDest As Long
-    Dim destCell As Range
-    Dim foundCell As Range
-    Dim keyword As String
-    Dim sourceWorkbook As Workbook
-    Dim sourceFilePath As String
+Sub MatchAndCopyDataFromOtherWorkbook()
+    Dim wsCurrent As Worksheet
+    Dim wsData As Worksheet
+    Dim lastRowCurrent As Long
+    Dim lastRowData As Long
+    Dim currentCell As Range
+    Dim matchCell As Range
+    Dim dataWorkbook As Workbook
+    Dim dataFilePath As String
 
-    ' Set the destination worksheet (the one you're working in)
-    Set wsDestination = ThisWorkbook.Sheets("Sheet1") ' Change "Sheet1" to your destination sheet name
+    ' Set the current worksheet
+    Set wsCurrent = ThisWorkbook.Sheets("Sheet1") ' Change "Sheet1" to the name of your current sheet
 
-    ' Specify the file path of the source workbook
-    sourceFilePath = "C:\Path\To\Your\DataWorkbook.xlsx" ' Change to the full path of your source workbook
+    ' Specify the path of the data workbook
+    dataFilePath = "C:\Path\To\Your\DataWorkbook.xlsx" ' Change to the full path of your data workbook
 
-    ' Open the source workbook
-    Set sourceWorkbook = Workbooks.Open(sourceFilePath)
+    ' Open the data workbook
+    Set dataWorkbook = Workbooks.Open(dataFilePath)
 
-    ' Set the source worksheet (in the external workbook)
-    Set wsSource = sourceWorkbook.Sheets("DataSheet") ' Change "DataSheet" to your source sheet name
+    ' Set the worksheet in the data workbook
+    Set wsData = dataWorkbook.Sheets("DataSheet") ' Change "DataSheet" to the name of your sheet in the data workbook
 
     ' Find the last row in both sheets
-    lastRowSource = wsSource.Cells(wsSource.Rows.Count, "B").End(xlUp).Row
-    lastRowDest = wsDestination.Cells(wsDestination.Rows.Count, "A").End(xlUp).Row
+    lastRowCurrent = wsCurrent.Cells(wsCurrent.Rows.Count, "A").End(xlUp).Row
+    lastRowData = wsData.Cells(wsData.Rows.Count, "B").End(xlUp).Row
 
-    ' Loop through each cell in column A of the destination sheet
-    For Each destCell In wsDestination.Range("A1:A" & lastRowDest)
-        keyword = destCell.Value
+    ' Loop through each cell in column A of the current sheet
+    For Each currentCell In wsCurrent.Range("A1:A" & lastRowCurrent)
+        ' Search for the current cell's value in column B of the data sheet
+        Set matchCell = wsData.Range("B1:B" & lastRowData).Find(What:=currentCell.Value, LookIn:=xlValues, LookAt:=xlWhole)
 
-        ' Look for the keyword in column B of the source sheet
-        Set foundCell = wsSource.Range("B1:B" & lastRowSource).Find(What:=keyword, LookIn:=xlValues, LookAt:=xlWhole)
-
-        If Not foundCell Is Nothing Then
-            ' If found, import the value from the corresponding column H into column B of the destination sheet
-            destCell.Offset(0, 1).Value = wsSource.Cells(foundCell.Row, "H").Value
+        If Not matchCell Is Nothing Then
+            ' If a match is found, copy the value from column H in the data sheet to column B in the current sheet
+            currentCell.Offset(0, 1).Value = wsData.Cells(matchCell.Row, "H").Value
         Else
-            ' If not found, clear the cell in column B of the destination sheet (optional)
-            destCell.Offset(0, 1).Value = "Not Found"
+            ' If no match is found, optionally leave the cell in column B blank or add a message
+            currentCell.Offset(0, 1).Value = "Not Found" ' Optional: change this as needed
         End If
-    Next destCell
+    Next currentCell
 
-    ' Close the source workbook without saving changes
-    sourceWorkbook.Close SaveChanges:=False
+    ' Close the data workbook without saving changes
+    dataWorkbook.Close SaveChanges:=False
 
 End Sub
