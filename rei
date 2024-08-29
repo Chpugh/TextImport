@@ -53,7 +53,7 @@ Function ExtractSecondNumber(ByVal FileContent As String, ByVal StartPos As Long
     Dim Matches As Object
     Dim Result As String
     Set RegExp = CreateObject("VBScript.RegExp")
-    RegExp.Pattern = "\b\d+(\.\d+)?\b"
+    RegExp.Pattern = "\b\d{1,3}(?:,\d{3})*(?:\.\d+)?\b"
     RegExp.Global = True
     Set Matches = RegExp.Execute(Mid(FileContent, StartPos))
     
