@@ -41,6 +41,11 @@ Sub ParseTextFileForAdmissionsAndWithdrawals()
                 ' Extract the second number after "TOTAL WITHDRAWALS:"
                 WithdrawalsNumber = ExtractSecondNumber(FileContent, WithdrawalsPos)
                 
+                ' Convert the number to a negative value
+                If IsNumeric(WithdrawalsNumber) Then
+                    WithdrawalsNumber = -CDbl(WithdrawalsNumber)
+                End If
+                
                 ' Import the number into the appropriate cell (B8, C8, D8, E8)
                 ws.Cells(8, ColIndex + 2).Value = WithdrawalsNumber
             End If
