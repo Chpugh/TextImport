@@ -1,10 +1,10 @@
-Sub ParseTextFileForKeywordsAndImportAdmissions()
+Sub ParseTextFileForAdmissionsAndWithdrawals()
     Dim FilePath As String
     Dim FileContent As String
     Dim Keywords As Variant
     Dim Keyword As String
-    Dim StartPos As Long, AdmissionsPos As Long
-    Dim AdmissionsNumber As String
+    Dim StartPos As Long, AdmissionsPos As Long, WithdrawalsPos As Long
+    Dim AdmissionsNumber As String, WithdrawalsNumber As String
     Dim ws As Worksheet
     Dim ColIndex As Integer
 
@@ -33,6 +33,21 @@ Sub ParseTextFileForKeywordsAndImportAdmissions()
                 
                 ' Import the number into the appropriate cell (B7, C7, D7, E7)
                 ws.Cells(7, ColIndex + 2).Value = AdmissionsNumber
+            End If
+            
+            ' Find "TOTAL WITHDRAWALS:" after the keyword
+            WithdrawalsPos = InStr(StartPos, FileContent, "TOTAL WITHDRAWALS:")
+            If WithdrawalsPos > 0 Then
+                ' Extract the second number after "TOTAL WITHDRAWALS:"
+                WithdrawalsNumber = ExtractSecondNumber(FileContent, WithdrawalsPos)
+                
+                ' Convert the number to a negative value
+                If IsNumeric(WithdrawalsNumber) Then
+                    WithdrawalsNumber = -CDbl(WithdrawalsNumber)
+                End If
+                
+                ' Import the number into the appropriate cell (B8, C8, D8, E8)
+                ws.Cells(8, ColIndex + 2).Value = WithdrawalsNumber
             End If
         End If
     Next ColIndex
