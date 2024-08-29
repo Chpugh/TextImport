@@ -33,6 +33,9 @@ Sub ParseTextFileForAdmissionsAndWithdrawals()
                 
                 ' Import the number into the appropriate cell (B7, C7, D7, E7)
                 ws.Cells(7, ColIndex + 2).Value = AdmissionsNumber
+            Else
+                ' If not found, clear the cell
+                ws.Cells(7, ColIndex + 2).Value = ""
             End If
             
             ' Find "TOTAL WITHDRAWALS:" after the keyword
@@ -48,7 +51,14 @@ Sub ParseTextFileForAdmissionsAndWithdrawals()
                 
                 ' Import the number into the appropriate cell (B8, C8, D8, E8)
                 ws.Cells(8, ColIndex + 2).Value = WithdrawalsNumber
+            Else
+                ' If not found, clear the cell
+                ws.Cells(8, ColIndex + 2).Value = ""
             End If
+        Else
+            ' If the keyword is not found, clear the cells
+            ws.Cells(7, ColIndex + 2).Value = ""
+            ws.Cells(8, ColIndex + 2).Value = ""
         End If
     Next ColIndex
 End Sub
