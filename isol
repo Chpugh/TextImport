@@ -1,0 +1,103 @@
+Sub ParseTextFileForAdmissionsAndWithdrawals()
+    Dim FilePath As String
+    Dim FileContent As String
+    Dim Keywords As Variant
+    Dim Keyword As String
+    Dim StartPos As Long, EndPos As Long
+    Dim AdmissionsPos As Long, WithdrawalsPos As Long
+    Dim AdmissionsNumber As String, WithdrawalsNumber As String
+    Dim ws As Worksheet
+    Dim ColIndex As Integer
+
+    ' Define the file path and open the file
+    FilePath = "C:\path\to\your\file.txt" ' Update with your actual file path
+    FileContent = GetFileContent(FilePath)
+    
+    ' Define the main keywords
+    Keywords = Array("k1", "k2", "k3", "k4")
+    
+    ' Set the worksheet
+    Set ws = ThisWorkbook.Sheets("Sheet1") ' Change to your sheet name
+
+    ' Loop through each main keyword
+    For ColIndex = LBound(Keywords) To UBound(Keywords)
+        Keyword = Keywords(ColIndex)
+        
+        ' Find the keyword in the file content
+        StartPos = InStr(1, FileContent, Keyword)
+        
+        If StartPos > 0 Then
+            ' Optional: Set EndPos to the start of the next keyword to isolate the section for this keyword
+            If ColIndex < UBound(Keywords) Then
+                EndPos = InStr(StartPos + 1, FileContent, Keywords(ColIndex + 1))
+            Else
+                EndPos = Len(FileContent) + 1 ' If it's the last keyword, scan to the end of the file
+            End If
+
+            ' Search within the keyword's section
+            AdmissionsPos = InStr(StartPos, Mid(FileContent, StartPos, EndPos - StartPos), "TOTAL ADMISSIONS:")
+            WithdrawalsPos = InStr(StartPos, Mid(FileContent, StartPos, EndPos - StartPos), "TOTAL WITHDRAWALS:")
+
+            ' Handle "TOTAL ADMISSIONS:"
+            If AdmissionsPos > 0 Then
+                ' Extract the second number after "TOTAL ADMISSIONS:"
+                AdmissionsNumber = ExtractSecondNumber(FileContent, StartPos + AdmissionsPos - 1)
+                
+                ' Import the number into the appropriate cell (B7, C7, D7, E7)
+                ws.Cells(7, ColIndex + 2).Value = AdmissionsNumber
+            Else
+                ' If not found, clear the cell
+                ws.Cells(7, ColIndex + 2).Value = ""
+            End If
+            
+            ' Handle "TOTAL WITHDRAWALS:"
+            If WithdrawalsPos > 0 Then
+                ' Extract the second number after "TOTAL WITHDRAWALS:"
+                WithdrawalsNumber = ExtractSecondNumber(FileContent, StartPos + WithdrawalsPos - 1)
+                
+                ' Convert the number to a negative value
+                If IsNumeric(WithdrawalsNumber) Then
+                    WithdrawalsNumber = -CDbl(WithdrawalsNumber)
+                End If
+                
+                ' Import the number into the appropriate cell (B8, C8, D8, E8)
+                ws.Cells(8, ColIndex + 2).Value = WithdrawalsNumber
+            Else
+                ' If not found, clear the cell
+                ws.Cells(8, ColIndex + 2).Value = ""
+            End If
+        Else
+            ' If the keyword is not found, clear the cells
+            ws.Cells(7, ColIndex + 2).Value = ""
+            ws.Cells(8, ColIndex + 2).Value = ""
+        End If
+    Next ColIndex
+End Sub
+
+Function GetFileContent(FilePath As String) As String
+    Dim FileNum As Integer
+    Dim FileContent As String
+    FileNum = FreeFile
+    Open FilePath For Input As #FileNum
+    FileContent = Input$(LOF(FileNum), FileNum)
+    Close #FileNum
+    GetFileContent = FileContent
+End Function
+
+Function ExtractSecondNumber(ByVal FileContent As String, ByVal StartPos As Long) As String
+    Dim RegExp As Object
+    Dim Matches As Object
+    Dim Result As String
+    Set RegExp = CreateObject("VBScript.RegExp")
+    RegExp.Pattern = "\b\d{1,3}(?:,\d{3})*(?:\.\d+)?\b"
+    RegExp.Global = True
+    Set Matches = RegExp.Execute(Mid(FileContent, StartPos))
+    
+    ' Skip the first number and get the second one
+    If Matches.Count > 1 Then
+        Result = Matches(1).Value
+    Else
+        Result = ""
+    End If
+    ExtractSecondNumber = Result
+End Function
