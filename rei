@@ -1,26 +1,26 @@
-Sub ParseTextFileAndImportAdmissions()
+Sub ParseTextFileForKeywordsAndImportAdmissions()
     Dim FilePath As String
     Dim FileContent As String
-    Dim MainKeywords As Variant
+    Dim Keywords As Variant
     Dim Keyword As String
     Dim StartPos As Long, AdmissionsPos As Long
     Dim AdmissionsNumber As String
     Dim ws As Worksheet
-    Dim ColNum As Integer
+    Dim ColIndex As Integer
 
     ' Define the file path and open the file
     FilePath = "C:\path\to\your\file.txt" ' Update with your actual file path
     FileContent = GetFileContent(FilePath)
     
     ' Define the main keywords
-    MainKeywords = Array("k1", "k2", "k3", "k4")
+    Keywords = Array("k1", "k2", "k3", "k4")
     
     ' Set the worksheet
     Set ws = ThisWorkbook.Sheets("Sheet1") ' Change to your sheet name
 
     ' Loop through each main keyword
-    For ColNum = 0 To UBound(MainKeywords)
-        Keyword = MainKeywords(ColNum)
+    For ColIndex = LBound(Keywords) To UBound(Keywords)
+        Keyword = Keywords(ColIndex)
         
         ' Find the keyword in the file content
         StartPos = InStr(FileContent, Keyword)
@@ -31,11 +31,11 @@ Sub ParseTextFileAndImportAdmissions()
                 ' Extract the second number after "TOTAL ADMISSIONS:"
                 AdmissionsNumber = ExtractSecondNumber(FileContent, AdmissionsPos)
                 
-                ' Import the number into the appropriate cell (B7, C7, D7, or E7)
-                ws.Cells(7, ColNum + 2).Value = AdmissionsNumber
+                ' Import the number into the appropriate cell (B7, C7, D7, E7)
+                ws.Cells(7, ColIndex + 2).Value = AdmissionsNumber
             End If
         End If
-    Next ColNum
+    Next ColIndex
 End Sub
 
 Function GetFileContent(FilePath As String) As String
