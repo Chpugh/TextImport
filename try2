@@ -1,0 +1,80 @@
+Sub ImportAdmissionsWithdrawals()
+    ' Define keywords
+    Dim keywords(1 To 4) As String
+    keywords(1) = "k1"
+    keywords(2) = "k2"
+    keywords(3) = "k3"
+    keywords(4) = "k4"
+    
+    ' Define text file path
+    Dim filePath As String
+    filePath = "C:\path\to\your\textfile.txt"
+    
+    ' Open the text file
+    Dim fileContent As String
+    Dim line As String
+    Dim currentKeyword As String
+    Dim admissionsFound As Boolean
+    Dim withdrawalsFound As Boolean
+    Dim admissionsValue As Double
+    Dim withdrawalsValue As Double
+    Dim rowNum As Integer
+    Dim i As Integer
+    rowNum = 7 ' Start on row 7
+    
+    ' Read the file content
+    Dim fileNum As Integer
+    fileNum = FreeFile
+    Open filePath For Input As fileNum
+    fileContent = Input$(LOF(fileNum), fileNum)
+    Close fileNum
+    
+    ' Loop through each keyword and search for corresponding TOTAL ADMISSIONS and TOTAL WITHDRAWALS
+    For i = 1 To 4
+        currentKeyword = keywords(i)
+        admissionsFound = False
+        withdrawalsFound = False
+        
+        ' Find keyword in the file
+        If InStr(fileContent, currentKeyword) > 0 Then
+            ' Find TOTAL ADMISSIONS after the keyword
+            If InStr(fileContent, "TOTAL ADMISSIONS:") > 0 Then
+                admissionsValue = ExtractNumber(fileContent, "TOTAL ADMISSIONS:")
+                admissionsFound = True
+            End If
+            
+            ' Find TOTAL WITHDRAWALS after the keyword
+            If InStr(fileContent, "TOTAL WITHDRAWALS:") > 0 Then
+                withdrawalsValue = ExtractNumber(fileContent, "TOTAL WITHDRAWALS:")
+                withdrawalsFound = True
+            End If
+            
+            ' Import to the respective cells
+            If admissionsFound Then
+                Cells(rowNum, i + 1).Value = admissionsValue ' Row 7 for TOTAL ADMISSIONS
+            End If
+            
+            If withdrawalsFound Then
+                Cells(rowNum + 1, i + 1).Value = withdrawalsValue ' Row 8 for TOTAL WITHDRAWALS
+            End If
+        End If
+    Next i
+End Sub
+
+' Function to extract the number after a keyword
+Function ExtractNumber(fileContent As String, keyword As String) As Double
+    Dim startPos As Long
+    Dim endPos As Long
+    Dim numString As String
+    startPos = InStr(fileContent, keyword) + Len(keyword)
+    endPos = startPos
+    
+    ' Loop to find the number
+    Do While Mid(fileContent, endPos, 1) Like "[0-9.]"
+        endPos = endPos + 1
+    Loop
+    
+    ' Extract the number
+    numString = Mid(fileContent, startPos, endPos - startPos)
+    ExtractNumber = Val(numString)
+End Function
