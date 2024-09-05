@@ -22,6 +22,10 @@ Sub ParseTextFileForAdmissionsAndWithdrawals()
     For ColIndex = LBound(Keywords) To UBound(Keywords)
         Keyword = Keywords(ColIndex)
         
+        ' Clear previous values for admissions and withdrawals before searching
+        AdmissionsNumber = ""
+        WithdrawalsNumber = ""
+        
         ' Find the keyword in the file content
         StartPos = InStr(FileContent, Keyword)
         If StartPos > 0 Then
@@ -30,12 +34,6 @@ Sub ParseTextFileForAdmissionsAndWithdrawals()
             If AdmissionsPos > 0 Then
                 ' Extract the second number after "TOTAL ADMISSIONS:"
                 AdmissionsNumber = ExtractSecondNumber(FileContent, AdmissionsPos)
-                
-                ' Import the number into the appropriate cell (B7, C7, D7, E7)
-                ws.Cells(7, ColIndex + 2).Value = AdmissionsNumber
-            Else
-                ' If not found, clear the cell
-                ws.Cells(7, ColIndex + 2).Value = ""
             End If
             
             ' Find "TOTAL WITHDRAWALS:" after the keyword
@@ -48,11 +46,22 @@ Sub ParseTextFileForAdmissionsAndWithdrawals()
                 If IsNumeric(WithdrawalsNumber) Then
                     WithdrawalsNumber = -CDbl(WithdrawalsNumber)
                 End If
-                
-                ' Import the number into the appropriate cell (B8, C8, D8, E8)
+            End If
+            
+            ' Import the results into the worksheet
+            ' Admissions goes in row 7 (B7, C7, D7, E7)
+            If AdmissionsNumber <> "" Then
+                ws.Cells(7, ColIndex + 2).Value = AdmissionsNumber
+            Else
+                ' If no admissions number is found, leave the cell blank
+                ws.Cells(7, ColIndex + 2).Value = ""
+            End If
+
+            ' Withdrawals go in row 8 (B8, C8, D8, E8)
+            If WithdrawalsNumber <> "" Then
                 ws.Cells(8, ColIndex + 2).Value = WithdrawalsNumber
             Else
-                ' If not found, clear the cell
+                ' If no withdrawals number is found, leave the cell blank
                 ws.Cells(8, ColIndex + 2).Value = ""
             End If
         Else
@@ -63,6 +72,7 @@ Sub ParseTextFileForAdmissionsAndWithdrawals()
     Next ColIndex
 End Sub
 
+' Function to get the content of the file
 Function GetFileContent(FilePath As String) As String
     Dim FileNum As Integer
     Dim FileContent As String
@@ -73,6 +83,7 @@ Function GetFileContent(FilePath As String) As String
     GetFileContent = FileContent
 End Function
 
+' Function to extract a second number after a given keyword
 Function ExtractSecondNumber(ByVal FileContent As String, ByVal StartPos As Long) As String
     Dim RegExp As Object
     Dim Matches As Object
