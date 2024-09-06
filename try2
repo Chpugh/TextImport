@@ -12,13 +12,15 @@ Sub ParseTextFileForKeywords()
     Dim totalWithdrawalsPos As Long
     Dim cellAdmissions As Range
     Dim cellWithdrawals As Range
+    Dim currentKeyword As String
+    Dim nextKeyword As String
     Dim foundAdmissions As Boolean
     Dim foundWithdrawals As Boolean
     
     ' Set the file path of the text file
     textFilePath = "C:\path\to\your\file.txt" ' Change to the actual file path
     
-    ' Set the keywords to search for (corresponding to columns B, C, D, and E)
+    ' Set the keywords to search for (corresponding to cells B5:E5)
     keywords = Array(Range("B5").Value, Range("C5").Value, Range("D5").Value, Range("E5").Value)
     
     ' Open the text file for reading
@@ -32,6 +34,14 @@ Sub ParseTextFileForKeywords()
         foundAdmissions = False
         foundWithdrawals = False
         
+        ' Set the current keyword and the next keyword (for ending the loop when the next keyword is found)
+        currentKeyword = keywords(i)
+        If i < UBound(keywords) Then
+            nextKeyword = keywords(i + 1)
+        Else
+            nextKeyword = "" ' No next keyword after the last one
+        End If
+        
         ' Rewind to the beginning of the file
         Seek fileNum, 1
         
@@ -40,13 +50,17 @@ Sub ParseTextFileForKeywords()
             Line Input #fileNum, line
             
             ' Search for the current keyword
-            pos = InStr(line, keywords(i))
+            pos = InStr(line, currentKeyword)
             
             If pos > 0 Then
                 ' Keyword found, start looking for TOTAL ADMISSIONS and TOTAL WITHDRAWALS
-                
                 Do Until EOF(fileNum)
                     Line Input #fileNum, line
+                    
+                    ' Check if the next keyword is encountered
+                    If nextKeyword <> "" And InStr(line, nextKeyword) > 0 Then
+                        Exit Do ' Stop looking for the current keyword if the next one is found
+                    End If
                     
                     ' Look for TOTAL ADMISSIONS
                     totalAdmissionsPos = InStr(line, "TOTAL ADMISSIONS:")
@@ -55,8 +69,8 @@ Sub ParseTextFileForKeywords()
                         admissionsValue = Mid(line, totalAdmissionsPos + Len("TOTAL ADMISSIONS:") + 1)
                         admissionsValue = Trim(Split(admissionsValue)(1)) ' Assumes the second number after the keyword
                         
-                        ' Import the value into row 7, corresponding column
-                        Set cellAdmissions = ThisWorkbook.Sheets("Sheet1").Cells(7, i + 2) ' Columns B = 2+1, C = 3+1, etc.
+                        ' Import the value into row 7, corresponding column (B = 2+1, C = 3+1, etc.)
+                        Set cellAdmissions = ThisWorkbook.Sheets("Sheet1").Cells(7, i + 2)
                         cellAdmissions.Value = admissionsValue
                         foundAdmissions = True
                     End If
@@ -68,8 +82,8 @@ Sub ParseTextFileForKeywords()
                         withdrawalsValue = Mid(line, totalWithdrawalsPos + Len("TOTAL WITHDRAWALS:") + 1)
                         withdrawalsValue = Trim(Split(withdrawalsValue)(1)) ' Assumes the second number after the keyword
                         
-                        ' Import the value into row 8, corresponding column
-                        Set cellWithdrawals = ThisWorkbook.Sheets("Sheet1").Cells(8, i + 2) ' Columns B = 2+1, C = 3+1, etc.
+                        ' Import the value into row 8, corresponding column (B = 2+1, C = 3+1, etc.)
+                        Set cellWithdrawals = ThisWorkbook.Sheets("Sheet1").Cells(8, i + 2)
                         cellWithdrawals.Value = withdrawalsValue
                         foundWithdrawals = True
                     End If
