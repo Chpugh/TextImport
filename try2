@@ -1,92 +1,92 @@
-Sub ParseTextFileForAdmissionsAndWithdrawals()
-    Dim FilePath As String
-    Dim FileContent As String
-    Dim Keywords As Variant
-    Dim Keyword As String
-    Dim StartPos As Long, AdmissionsPos As Long, WithdrawalsPos As Long
-    Dim AdmissionsNumber As String, WithdrawalsNumber As String
-    Dim ws As Worksheet
-    Dim ColIndex As Integer
+Sub ParseTextFileForKeywords()
 
-    ' Define the file path and open the file
-    FilePath = "C:\path\to\your\file.txt" ' Update with your actual file path
-    FileContent = GetFileContent(FilePath)
+    Dim textFilePath As String
+    Dim keywords As Variant
+    Dim line As String
+    Dim admissionsValue As String
+    Dim withdrawalsValue As String
+    Dim fileNum As Integer
+    Dim i As Integer
+    Dim pos As Long
+    Dim totalAdmissionsPos As Long
+    Dim totalWithdrawalsPos As Long
+    Dim cellAdmissions As Range
+    Dim cellWithdrawals As Range
+    Dim foundAdmissions As Boolean
+    Dim foundWithdrawals As Boolean
     
-    ' Define the main keywords
-    Keywords = Array("k1", "k2", "k3", "k4")
+    ' Set the file path of the text file
+    textFilePath = "C:\path\to\your\file.txt" ' Change to the actual file path
     
-    ' Set the worksheet
-    Set ws = ThisWorkbook.Sheets("Sheet1") ' Change to your sheet name
-
-    ' Loop through each main keyword
-    For ColIndex = LBound(Keywords) To UBound(Keywords)
-        Keyword = Keywords(ColIndex)
+    ' Set the keywords to search for
+    keywords = Array("KEYWORD1", "KEYWORD2", "KEYWORD3", "KEYWORD4") ' Replace with your actual keywords
+    
+    ' Open the text file for reading
+    fileNum = FreeFile
+    Open textFilePath For Input As fileNum
+    
+    ' Loop through each keyword
+    For i = LBound(keywords) To UBound(keywords)
+    
+        ' Reset flags for each keyword
+        foundAdmissions = False
+        foundWithdrawals = False
         
-        ' Find the keyword in the file content
-        StartPos = InStr(FileContent, Keyword)
-        If StartPos > 0 Then
-            ' Find "TOTAL ADMISSIONS:" after the keyword
-            AdmissionsPos = InStr(StartPos, FileContent, "TOTAL ADMISSIONS:")
-            If AdmissionsPos > 0 Then
-                ' Extract the second number after "TOTAL ADMISSIONS:"
-                AdmissionsNumber = ExtractSecondNumber(FileContent, AdmissionsPos)
-                
-                ' Import the number into the appropriate cell (B7, C7, D7, E7)
-                ws.Cells(7, ColIndex + 2).Value = AdmissionsNumber
-            Else
-                ' If not found, clear the cell
-                ws.Cells(7, ColIndex + 2).Value = ""
-            End If
+        ' Rewind to the beginning of the file
+        Seek fileNum, 1
+        
+        ' Loop through each line of the text file
+        Do Until EOF(fileNum)
+            Line Input #fileNum, line
             
-            ' Find "TOTAL WITHDRAWALS:" after the keyword
-            WithdrawalsPos = InStr(StartPos, FileContent, "TOTAL WITHDRAWALS:")
-            If WithdrawalsPos > 0 Then
-                ' Extract the second number after "TOTAL WITHDRAWALS:"
-                WithdrawalsNumber = ExtractSecondNumber(FileContent, WithdrawalsPos)
+            ' Search for the current keyword
+            pos = InStr(line, keywords(i))
+            
+            If pos > 0 Then
+                ' Keyword found, start looking for TOTAL ADMISSIONS and TOTAL WITHDRAWALS
                 
-                ' Convert the number to a negative value
-                If IsNumeric(WithdrawalsNumber) Then
-                    WithdrawalsNumber = -CDbl(WithdrawalsNumber)
-                End If
+                Do Until EOF(fileNum)
+                    Line Input #fileNum, line
+                    
+                    ' Look for TOTAL ADMISSIONS
+                    totalAdmissionsPos = InStr(line, "TOTAL ADMISSIONS:")
+                    If totalAdmissionsPos > 0 And Not foundAdmissions Then
+                        ' Extract the number after TOTAL ADMISSIONS
+                        admissionsValue = Mid(line, totalAdmissionsPos + Len("TOTAL ADMISSIONS:") + 1)
+                        admissionsValue = Trim(Split(admissionsValue)(1)) ' Assumes the second number after the keyword
+                        ' Import the value into the appropriate cell in Excel (Row 7)
+                        Set cellAdmissions = ThisWorkbook.Sheets("Sheet1").Cells(7, i + 2) ' Adjust as needed
+                        cellAdmissions.Value = admissionsValue
+                        foundAdmissions = True
+                    End If
+                    
+                    ' Look for TOTAL WITHDRAWALS
+                    totalWithdrawalsPos = InStr(line, "TOTAL WITHDRAWALS:")
+                    If totalWithdrawalsPos > 0 And Not foundWithdrawals Then
+                        ' Extract the number after TOTAL WITHDRAWALS
+                        withdrawalsValue = Mid(line, totalWithdrawalsPos + Len("TOTAL WITHDRAWALS:") + 1)
+                        withdrawalsValue = Trim(Split(withdrawalsValue)(1)) ' Assumes the second number after the keyword
+                        ' Import the value into the appropriate cell in Excel (Row 8)
+                        Set cellWithdrawals = ThisWorkbook.Sheets("Sheet1").Cells(8, i + 2) ' Adjust as needed
+                        cellWithdrawals.Value = withdrawalsValue
+                        foundWithdrawals = True
+                    End If
+                    
+                    ' Exit the loop if both totals are found
+                    If foundAdmissions And foundWithdrawals Then Exit Do
+                    
+                Loop
                 
-                ' Import the number into the appropriate cell (B8, C8, D8, E8)
-                ws.Cells(8, ColIndex + 2).Value = WithdrawalsNumber
-            Else
-                ' If "TOTAL WITHDRAWALS:" is not found, clear the cell
-                ws.Cells(8, ColIndex + 2).Value = ""
+                ' Move to the next keyword once processing for this one is complete
+                Exit Do
             End If
-        Else
-            ' If the keyword is not found, clear the cells
-            ws.Cells(7, ColIndex + 2).Value = ""
-            ws.Cells(8, ColIndex + 2).Value = ""
-        End If
-    Next ColIndex
-End Sub
-
-Function GetFileContent(FilePath As String) As String
-    Dim FileNum As Integer
-    Dim FileContent As String
-    FileNum = FreeFile
-    Open FilePath For Input As #FileNum
-    FileContent = Input$(LOF(FileNum), FileNum)
-    Close #FileNum
-    GetFileContent = FileContent
-End Function
-
-Function ExtractSecondNumber(ByVal FileContent As String, ByVal StartPos As Long) As String
-    Dim RegExp As Object
-    Dim Matches As Object
-    Dim Result As String
-    Set RegExp = CreateObject("VBScript.RegExp")
-    RegExp.Pattern = "\b\d{1,3}(?:,\d{3})*(?:\.\d+)?\b"
-    RegExp.Global = True
-    Set Matches = RegExp.Execute(Mid(FileContent, StartPos))
+        Loop
+        
+    Next i
     
-    ' Skip the first number and get the second one
-    If Matches.Count > 1 Then
-        Result = Matches(1).Value
-    Else
-        Result = ""
-    End If
-    ExtractSecondNumber = Result
-End Function
+    ' Close the text file
+    Close fileNum
+    
+    MsgBox "Import completed!", vbInformation
+
+End Sub
