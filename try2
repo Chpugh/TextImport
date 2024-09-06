@@ -18,8 +18,8 @@ Sub ParseTextFileForKeywords()
     ' Set the file path of the text file
     textFilePath = "C:\path\to\your\file.txt" ' Change to the actual file path
     
-    ' Set the keywords to search for
-    keywords = Array("KEYWORD1", "KEYWORD2", "KEYWORD3", "KEYWORD4") ' Replace with your actual keywords
+    ' Set the keywords to search for (corresponding to columns B, C, D, and E)
+    keywords = Array(Range("B5").Value, Range("C5").Value, Range("D5").Value, Range("E5").Value)
     
     ' Open the text file for reading
     fileNum = FreeFile
@@ -51,11 +51,12 @@ Sub ParseTextFileForKeywords()
                     ' Look for TOTAL ADMISSIONS
                     totalAdmissionsPos = InStr(line, "TOTAL ADMISSIONS:")
                     If totalAdmissionsPos > 0 And Not foundAdmissions Then
-                        ' Extract the number after TOTAL ADMISSIONS
+                        ' Extract the second number after TOTAL ADMISSIONS
                         admissionsValue = Mid(line, totalAdmissionsPos + Len("TOTAL ADMISSIONS:") + 1)
                         admissionsValue = Trim(Split(admissionsValue)(1)) ' Assumes the second number after the keyword
-                        ' Import the value into the appropriate cell in Excel (Row 7)
-                        Set cellAdmissions = ThisWorkbook.Sheets("Sheet1").Cells(7, i + 2) ' Adjust as needed
+                        
+                        ' Import the value into row 7, corresponding column
+                        Set cellAdmissions = ThisWorkbook.Sheets("Sheet1").Cells(7, i + 2) ' Columns B = 2+1, C = 3+1, etc.
                         cellAdmissions.Value = admissionsValue
                         foundAdmissions = True
                     End If
@@ -63,11 +64,12 @@ Sub ParseTextFileForKeywords()
                     ' Look for TOTAL WITHDRAWALS
                     totalWithdrawalsPos = InStr(line, "TOTAL WITHDRAWALS:")
                     If totalWithdrawalsPos > 0 And Not foundWithdrawals Then
-                        ' Extract the number after TOTAL WITHDRAWALS
+                        ' Extract the second number after TOTAL WITHDRAWALS
                         withdrawalsValue = Mid(line, totalWithdrawalsPos + Len("TOTAL WITHDRAWALS:") + 1)
                         withdrawalsValue = Trim(Split(withdrawalsValue)(1)) ' Assumes the second number after the keyword
-                        ' Import the value into the appropriate cell in Excel (Row 8)
-                        Set cellWithdrawals = ThisWorkbook.Sheets("Sheet1").Cells(8, i + 2) ' Adjust as needed
+                        
+                        ' Import the value into row 8, corresponding column
+                        Set cellWithdrawals = ThisWorkbook.Sheets("Sheet1").Cells(8, i + 2) ' Columns B = 2+1, C = 3+1, etc.
                         cellWithdrawals.Value = withdrawalsValue
                         foundWithdrawals = True
                     End If
