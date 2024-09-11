@@ -1,108 +1,69 @@
-Sub ParseTextFileForKeywords()
-
-    Dim textFilePath As String
-    Dim keywords As Variant
-    Dim line As String
-    Dim admissionsValue As String
-    Dim withdrawalsValue As String
-    Dim fileNum As Integer
-    Dim i As Integer
-    Dim pos As Long
-    Dim totalAdmissionsPos As Long
-    Dim totalWithdrawalsPos As Long
-    Dim cellAdmissions As Range
-    Dim cellWithdrawals As Range
-    Dim currentKeyword As String
-    Dim nextKeyword As String
-    Dim foundAdmissions As Boolean
-    Dim foundWithdrawals As Boolean
+Sub ParseSecurityData()
+    Dim TextFile As String
+    Dim FilePath As String
+    Dim FileContent As String
+    Dim SecurityIDs As Variant
+    Dim CurrentSecurity As String
+    Dim AdmissionsFound As Boolean, WithdrawalsFound As Boolean
+    Dim AdmissionsValue As Double, WithdrawalsValue As Double
+    Dim SecurityRow As Integer
+    Dim i As Integer, Line As Variant
     
-    ' Set the file path of the text file
-    textFilePath = "C:\path\to\your\file.txt" ' Change to the actual file path
+    ' Set the path to your text file
+    FilePath = "C:\path_to_your_file\yourfile.txt"
     
-    ' Set the keywords to search for (corresponding to cells B5:E5)
-    keywords = Array(Range("B5").Value, Range("C5").Value, Range("D5").Value, Range("E5").Value)
+    ' Read the text file into a string variable
+    TextFile = FreeFile
+    Open FilePath For Input As TextFile
+    FileContent = Input$(LOF(TextFile), TextFile)
+    Close TextFile
     
-    ' Open the text file for reading
-    fileNum = FreeFile
-    Open textFilePath For Input As fileNum
+    ' Split the content into lines
+    Lines = Split(FileContent, vbCrLf)
     
-    ' Loop through each keyword
-    For i = LBound(keywords) To UBound(keywords)
+    ' Define your security IDs (B5, C5, D5, E5)
+    SecurityIDs = Array(Range("B5").Value, Range("C5").Value, Range("D5").Value, Range("E5").Value)
     
-        ' Reset flags for each keyword
-        foundAdmissions = False
-        foundWithdrawals = False
+    ' Loop through the text file line by line
+    For i = LBound(SecurityIDs) To UBound(SecurityIDs)
+        CurrentSecurity = SecurityIDs(i)
+        AdmissionsFound = False
+        WithdrawalsFound = False
         
-        ' Set the current keyword and the next keyword (for ending the loop when the next keyword is found)
-        currentKeyword = keywords(i)
-        If i < UBound(keywords) Then
-            nextKeyword = keywords(i + 1)
-        Else
-            nextKeyword = "" ' No next keyword after the last one
-        End If
-        
-        ' Rewind to the beginning of the file
-        Seek fileNum, 1
-        
-        ' Loop through each line of the text file
-        Do Until EOF(fileNum)
-            Line Input #fileNum, line
-            
-            ' Search for the current keyword
-            pos = InStr(line, currentKeyword)
-            
-            If pos > 0 Then
-                ' Keyword found, start looking for TOTAL ADMISSIONS and TOTAL WITHDRAWALS
-                Do Until EOF(fileNum)
-                    Line Input #fileNum, line
+        ' Loop through each line to find the current security
+        For Each Line In Lines
+            If InStr(Line, CurrentSecurity) > 0 Then
+                ' Found the security, now look for TOTAL ADMISSIONS and TOTAL WITHDRAWALS under this security
+                Do While Not (AdmissionsFound And WithdrawalsFound)
+                    i = i + 1 ' Move to the next line
                     
-                    ' Check if the next keyword is encountered
-                    If nextKeyword <> "" And InStr(line, nextKeyword) > 0 Then
-                        Exit Do ' Stop looking for the current keyword if the next one is found
+                    ' Check for TOTAL ADMISSIONS:
+                    If InStr(Lines(i), "TOTAL ADMISSIONS:") > 0 Then
+                        AdmissionsValue = ParseSecondNumber(Lines(i))
+                        AdmissionsFound = True
+                        Cells(7, 2 + i).Value = AdmissionsValue ' Row 7 for Admissions
                     End If
                     
-                    ' Look for TOTAL ADMISSIONS
-                    totalAdmissionsPos = InStr(line, "TOTAL ADMISSIONS:")
-                    If totalAdmissionsPos > 0 And Not foundAdmissions Then
-                        ' Extract the second number after TOTAL ADMISSIONS
-                        admissionsValue = Mid(line, totalAdmissionsPos + Len("TOTAL ADMISSIONS:") + 1)
-                        admissionsValue = Trim(Split(admissionsValue)(1)) ' Assumes the second number after the keyword
-                        
-                        ' Import the value into row 7, corresponding column (B = 2+1, C = 3+1, etc.)
-                        Set cellAdmissions = ThisWorkbook.Sheets("Sheet1").Cells(7, i + 2)
-                        cellAdmissions.Value = admissionsValue
-                        foundAdmissions = True
+                    ' Check for TOTAL WITHDRAWALS:
+                    If InStr(Lines(i), "TOTAL WITHDRAWALS:") > 0 Then
+                        WithdrawalsValue = ParseSecondNumber(Lines(i))
+                        WithdrawalsFound = True
+                        Cells(8, 2 + i).Value = WithdrawalsValue ' Row 8 for Withdrawals
                     End If
                     
-                    ' Look for TOTAL WITHDRAWALS
-                    totalWithdrawalsPos = InStr(line, "TOTAL WITHDRAWALS:")
-                    If totalWithdrawalsPos > 0 And Not foundWithdrawals Then
-                        ' Extract the second number after TOTAL WITHDRAWALS
-                        withdrawalsValue = Mid(line, totalWithdrawalsPos + Len("TOTAL WITHDRAWALS:") + 1)
-                        withdrawalsValue = Trim(Split(withdrawalsValue)(1)) ' Assumes the second number after the keyword
-                        
-                        ' Import the value into row 8, corresponding column (B = 2+1, C = 3+1, etc.)
-                        Set cellWithdrawals = ThisWorkbook.Sheets("Sheet1").Cells(8, i + 2)
-                        cellWithdrawals.Value = withdrawalsValue
-                        foundWithdrawals = True
-                    End If
-                    
-                    ' Exit the loop if both totals are found
-                    If foundAdmissions And foundWithdrawals Then Exit Do
-                    
+                    ' Stop if both keywords have been found
+                    If AdmissionsFound And WithdrawalsFound Then Exit Do
                 Loop
-                
-                ' Move to the next keyword once processing for this one is complete
-                Exit Do
             End If
-        Loop
-        
+        Next Line
     Next i
-    
-    ' Close the text file
-    Close fileNum
-    
-    MsgBox "Import completed!", vbInformation
-
 End Sub
+
+' Helper function to parse and return the second number in a line
+Function ParseSecondNumber(Line As String) As Double
+    Dim Words As Variant
+    Words = Split(Line, " ")
+    
+    ' Skip the first number and return the second one after the keyword
+    ParseSecondNumber = CDbl(Words(UBound(Words) - 1)) ' Adjust index as needed if format varies
+End Function
