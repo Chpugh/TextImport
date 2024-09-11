@@ -1,69 +1,87 @@
-Sub ParseSecurityData()
-    Dim TextFile As String
+Sub ParseSecurities()
     Dim FilePath As String
-    Dim FileContent As String
-    Dim SecurityIDs As Variant
-    Dim CurrentSecurity As String
-    Dim AdmissionsFound As Boolean, WithdrawalsFound As Boolean
-    Dim AdmissionsValue As Double, WithdrawalsValue As Double
-    Dim SecurityRow As Integer
-    Dim i As Integer, Line As Variant
+    Dim TextLine As String
+    Dim Securities(1 To 4) As String
+    Dim Admissions(1 To 4) As Variant
+    Dim Withdrawals(1 To 4) As Variant
+    Dim i As Integer, j As Integer
+    Dim KeyAdmissions As String, KeyWithdrawals As String
+    Dim fso As Object, ts As Object
+    Dim FoundSecurity As Boolean
     
-    ' Set the path to your text file
-    FilePath = "C:\path_to_your_file\yourfile.txt"
+    ' Define keywords
+    KeyAdmissions = "TOTAL ADMISSIONS:"
+    KeyWithdrawals = "TOTAL WITHDRAWALS:"
     
-    ' Read the text file into a string variable
-    TextFile = FreeFile
-    Open FilePath For Input As TextFile
-    FileContent = Input$(LOF(TextFile), TextFile)
-    Close TextFile
+    ' Path to the text file
+    FilePath = Application.GetOpenFilename("Text Files (*.txt), *.txt", , "Select the Text File")
+    If FilePath = "False" Then Exit Sub ' If no file is selected, exit
     
-    ' Split the content into lines
-    Lines = Split(FileContent, vbCrLf)
+    ' Get security IDs from the Excel sheet (row 5, columns B to E)
+    For i = 1 To 4
+        Securities(i) = Cells(5, i + 1).Value
+        Admissions(i) = ""
+        Withdrawals(i) = ""
+    Next i
     
-    ' Define your security IDs (B5, C5, D5, E5)
-    SecurityIDs = Array(Range("B5").Value, Range("C5").Value, Range("D5").Value, Range("E5").Value)
+    ' Open the text file
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set ts = fso.OpenTextFile(FilePath, 1)
     
-    ' Loop through the text file line by line
-    For i = LBound(SecurityIDs) To UBound(SecurityIDs)
-        CurrentSecurity = SecurityIDs(i)
-        AdmissionsFound = False
-        WithdrawalsFound = False
+    ' Read the file line by line
+    Do Until ts.AtEndOfStream
+        TextLine = ts.ReadLine
         
-        ' Loop through each line to find the current security
-        For Each Line In Lines
-            If InStr(Line, CurrentSecurity) > 0 Then
-                ' Found the security, now look for TOTAL ADMISSIONS and TOTAL WITHDRAWALS under this security
-                Do While Not (AdmissionsFound And WithdrawalsFound)
-                    i = i + 1 ' Move to the next line
-                    
-                    ' Check for TOTAL ADMISSIONS:
-                    If InStr(Lines(i), "TOTAL ADMISSIONS:") > 0 Then
-                        AdmissionsValue = ParseSecondNumber(Lines(i))
-                        AdmissionsFound = True
-                        Cells(7, 2 + i).Value = AdmissionsValue ' Row 7 for Admissions
-                    End If
-                    
-                    ' Check for TOTAL WITHDRAWALS:
-                    If InStr(Lines(i), "TOTAL WITHDRAWALS:") > 0 Then
-                        WithdrawalsValue = ParseSecondNumber(Lines(i))
-                        WithdrawalsFound = True
-                        Cells(8, 2 + i).Value = WithdrawalsValue ' Row 8 for Withdrawals
-                    End If
-                    
-                    ' Stop if both keywords have been found
-                    If AdmissionsFound And WithdrawalsFound Then Exit Do
-                Loop
+        ' Loop through all securities
+        For i = 1 To 4
+            If InStr(TextLine, Securities(i)) > 0 Then
+                FoundSecurity = True
             End If
-        Next Line
+            
+            ' If a security is found, look for "TOTAL ADMISSIONS" or "TOTAL WITHDRAWALS"
+            If FoundSecurity Then
+                ' Check for TOTAL ADMISSIONS
+                If InStr(TextLine, KeyAdmissions) > 0 Then
+                    Admissions(i) = GetSecondNumber(TextLine)
+                End If
+                
+                ' Check for TOTAL WITHDRAWALS
+                If InStr(TextLine, KeyWithdrawals) > 0 Then
+                    Withdrawals(i) = GetSecondNumber(TextLine)
+                End If
+                
+                ' If both admissions and withdrawals are found, reset FoundSecurity
+                If Not IsEmpty(Admissions(i)) And Not IsEmpty(Withdrawals(i)) Then
+                    FoundSecurity = False
+                End If
+            End If
+        Next i
+    Loop
+    
+    ' Close the text file
+    ts.Close
+    
+    ' Write the results back to Excel (rows 7 and 8, columns B to E)
+    For i = 1 To 4
+        Cells(7, i + 1).Value = Admissions(i)
+        Cells(8, i + 1).Value = Withdrawals(i)
     Next i
 End Sub
 
-' Helper function to parse and return the second number in a line
-Function ParseSecondNumber(Line As String) As Double
-    Dim Words As Variant
-    Words = Split(Line, " ")
-    
-    ' Skip the first number and return the second one after the keyword
-    ParseSecondNumber = CDbl(Words(UBound(Words) - 1)) ' Adjust index as needed if format varies
+' Function to extract the second number after the keyword
+Function GetSecondNumber(ByVal TextLine As String) As Variant
+    Dim Parts() As String
+    Dim i As Integer
+    Parts = Split(TextLine, " ")
+    i = 0
+    For Each Part In Parts
+        If IsNumeric(Part) Then
+            i = i + 1
+            If i = 2 Then
+                GetSecondNumber = CDbl(Part)
+                Exit Function
+            End If
+        End If
+    Next Part
+    GetSecondNumber = ""
 End Function
