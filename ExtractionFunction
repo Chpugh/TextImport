@@ -1,0 +1,34 @@
+' Function to extract a second number after a given keyword
+' Now includes an additional check to stop if another security is encountered
+Function ExtractSecondNumber(ByVal FileContent As String, ByVal StartPos As Long, ByVal Keywords As Variant) As String
+    Dim RegExp As Object
+    Dim Matches As Object
+    Dim Result As String
+    Dim NextSecurityPos As Long
+    Dim Keyword As Variant
+
+    ' Check for any other security appearing after the current keyword
+    For Each Keyword In Keywords
+        NextSecurityPos = InStr(StartPos + 1, FileContent, Keyword)
+        If NextSecurityPos > 0 And NextSecurityPos < StartPos + 500 Then ' Assuming security comes within 500 chars
+            ' Another security is encountered before finding the second number, exit early
+            ExtractSecondNumber = ""
+            Exit Function
+        End If
+    Next Keyword
+
+    ' Use Regular Expression to find numbers in the text
+    Set RegExp = CreateObject("VBScript.RegExp")
+    RegExp.Pattern = "\b\d{1,3}(?:,\d{3})*(?:\.\d+)?\b"
+    RegExp.Global = True
+    Set Matches = RegExp.Execute(Mid(FileContent, StartPos))
+
+    ' Skip the first number and get the second one
+    If Matches.Count > 1 Then
+        Result = Matches(1).Value
+        Result = Trim(Replace(Result, ",", "")) ' Clean result: remove commas, trim spaces
+    Else
+        Result = ""
+    End If
+    ExtractSecondNumber = Result
+End Function
