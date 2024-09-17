@@ -1,3 +1,15 @@
+AdmissionsNumber = ExtractSecondNumber(FileContent, AdmissionsPos, Keywords)
+WithdrawalsNumber = ExtractSecondNumber(FileContent, WithdrawalsPos, Keywords)
+
+
+
+
+
+
+
+
+
+
 ' Function to extract a second number after a given keyword
 ' Now includes an additional check to stop if another security is encountered
 Function ExtractSecondNumber(ByVal FileContent As String, ByVal StartPos As Long, ByVal Keywords As Variant) As String
