@@ -1,13 +1,15 @@
-Sub ParseTextFileForS1_ForLoop()
+Sub ParseTextFileForSecurities()
     Dim FilePath As String
     Dim TextLine As String
+    Dim Securities As Variant
+    Dim CurrentSecurity As String
     Dim FileNum As Integer
-    Dim S1Found As Boolean
-    Dim AdmissionsValue As String
-    Dim WithdrawalsValue As String
-    Dim Pos As Integer
-    Dim Lines() As String
     Dim i As Integer
+    Dim Lines() As String
+    Dim SecurityIndex As Integer
+    
+    ' List of securities (S1, S2, S3, S4)
+    Securities = Array("S1", "S2", "S3", "S4")
     
     ' Specify the file path to the text file
     FilePath = "C:\path\to\your\file.txt"
@@ -23,73 +25,25 @@ Sub ParseTextFileForS1_ForLoop()
     ' Close the file after reading
     Close FileNum
     
-    ' Initialize variables
-    S1Found = False
-    AdmissionsValue = ""
-    WithdrawalsValue = ""
+    ' Initialize security index (-1 means no security found yet)
+    SecurityIndex = -1
     
     ' Loop through each line using a For loop
     For i = LBound(Lines) To UBound(Lines)
         TextLine = Lines(i)
         
-        ' Check if the line contains S1
-        If InStr(TextLine, "S1") > 0 Then
-            S1Found = True ' S1 is found, start looking for keywords
-            
-        ElseIf InStr(TextLine, "S2") > 0 Then
-            ' Exit the loop if S2 is found
-            Exit For
-            
-        ElseIf S1Found Then
-            ' Check for "TOTAL ADMISSIONS:"
-            If InStr(TextLine, "TOTAL ADMISSIONS:") > 0 Then
-                Pos = InStr(TextLine, "TOTAL ADMISSIONS:")
-                ' Parse the second number after the keyword
-                AdmissionsValue = GetSecondNumber(TextLine, Pos + Len("TOTAL ADMISSIONS:"))
-            
-            ' Check for "TOTAL WITHDRAWALS:"
-            ElseIf InStr(TextLine, "TOTAL WITHDRAWALS:") > 0 Then
-                Pos = InStr(TextLine, "TOTAL WITHDRAWALS:")
-                ' Parse the second number after the keyword
-                WithdrawalsValue = GetSecondNumber(TextLine, Pos + Len("TOTAL WITHDRAWALS:"))
+        ' Loop through the securities to check if the current line contains one of them
+        For Each CurrentSecurity In Securities
+            If InStr(TextLine, CurrentSecurity) > 0 Then
+                SecurityIndex = Application.Match(CurrentSecurity, Securities, 0) - 1
+                Exit For
             End If
-            
-            ' Exit the loop if both admissions and withdrawals are found
-            If AdmissionsValue <> "" And WithdrawalsValue <> "" Then Exit For
+        Next CurrentSecurity
+        
+        ' If a security is found, SecurityIndex will hold the index (0 for S1, 1 for S2, etc.)
+        If SecurityIndex >= 0 Then
+            ' Example: Print to immediate window what security we're currently on
+            Debug.Print "Currently on security: " & Securities(SecurityIndex)
         End If
     Next i
-    
-    ' Write the values to the Excel sheet
-    If AdmissionsValue <> "" Then
-        Cells(7, 2).Value = AdmissionsValue ' Column B, Row 7
-    End If
-    
-    If WithdrawalsValue <> "" Then
-        Cells(8, 2).Value = WithdrawalsValue ' Column B, Row 8
-    End If
 End Sub
-
-' Helper function to extract the second number from the text line
-Function GetSecondNumber(ByVal TextLine As String, ByVal StartPos As Integer) As String
-    Dim Parts As Variant
-    Dim i As Integer
-    Dim Counter As Integer
-    
-    ' Split the text line into parts (numbers and words)
-    Parts = Split(Mid(TextLine, StartPos))
-    Counter = 0
-    
-    ' Loop through the parts and return the second number found
-    For i = LBound(Parts) To UBound(Parts)
-        If IsNumeric(Parts(i)) Then
-            Counter = Counter + 1
-            If Counter = 2 Then
-                GetSecondNumber = Parts(i)
-                Exit Function
-            End If
-        End If
-    Next i
-    
-    ' If no second number is found, return an empty string
-    GetSecondNumber = ""
-End Function
