@@ -1,4 +1,4 @@
-Sub ParseTextFileForS1()
+Sub ParseTextFileForS1_ForLoop()
     Dim FilePath As String
     Dim TextLine As String
     Dim FileNum As Integer
@@ -6,6 +6,8 @@ Sub ParseTextFileForS1()
     Dim AdmissionsValue As String
     Dim WithdrawalsValue As String
     Dim Pos As Integer
+    Dim Lines() As String
+    Dim i As Integer
     
     ' Specify the file path to the text file
     FilePath = "C:\path\to\your\file.txt"
@@ -14,14 +16,21 @@ Sub ParseTextFileForS1()
     FileNum = FreeFile
     Open FilePath For Input As FileNum
     
+    ' Read all lines from the file into an array
+    TextLine = Input$(LOF(FileNum), FileNum)
+    Lines = Split(TextLine, vbCrLf)
+    
+    ' Close the file after reading
+    Close FileNum
+    
     ' Initialize variables
     S1Found = False
     AdmissionsValue = ""
     WithdrawalsValue = ""
     
-    ' Loop through the file line by line
-    Do While Not EOF(FileNum)
-        Line Input #FileNum, TextLine
+    ' Loop through each line using a For loop
+    For i = LBound(Lines) To UBound(Lines)
+        TextLine = Lines(i)
         
         ' Check if the line contains S1
         If InStr(TextLine, "S1") > 0 Then
@@ -29,7 +38,7 @@ Sub ParseTextFileForS1()
             
         ElseIf InStr(TextLine, "S2") > 0 Then
             ' Exit the loop if S2 is found
-            Exit Do
+            Exit For
             
         ElseIf S1Found Then
             ' Check for "TOTAL ADMISSIONS:"
@@ -46,12 +55,9 @@ Sub ParseTextFileForS1()
             End If
             
             ' Exit the loop if both admissions and withdrawals are found
-            If AdmissionsValue <> "" And WithdrawalsValue <> "" Then Exit Do
+            If AdmissionsValue <> "" And WithdrawalsValue <> "" Then Exit For
         End If
-    Loop
-    
-    ' Close the file
-    Close FileNum
+    Next i
     
     ' Write the values to the Excel sheet
     If AdmissionsValue <> "" Then
