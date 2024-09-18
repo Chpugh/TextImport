@@ -1,20 +1,11 @@
-Sub ParseTextFileForSecurities()
+Sub ParseTextFileForS1()
     Dim FilePath As String
     Dim TextLine As String
-    Dim Securities As Variant
-    Dim i As Integer
     Dim FileNum As Integer
-    Dim Pos As Integer
+    Dim S1Found As Boolean
     Dim AdmissionsValue As String
     Dim WithdrawalsValue As String
-    Dim CurrentSecurity As String
-    Dim SecurityFound As Boolean
-    Dim KeyWord As String
-    Dim ParsedNumber As String
-    Dim ColumnOffset As Integer
-    
-    ' List of securities (S1, S2, S3, S4)
-    Securities = Array("S1", "S2", "S3", "S4")
+    Dim Pos As Integer
     
     ' Specify the file path to the text file
     FilePath = "C:\path\to\your\file.txt"
@@ -23,56 +14,53 @@ Sub ParseTextFileForSecurities()
     FileNum = FreeFile
     Open FilePath For Input As FileNum
     
-    ' Loop through each security
-    For i = LBound(Securities) To UBound(Securities)
-        CurrentSecurity = Securities(i)
-        SecurityFound = False
-        AdmissionsValue = ""
-        WithdrawalsValue = ""
+    ' Initialize variables
+    S1Found = False
+    AdmissionsValue = ""
+    WithdrawalsValue = ""
+    
+    ' Loop through the file line by line
+    Do While Not EOF(FileNum)
+        Line Input #FileNum, TextLine
         
-        ' Loop through the file line by line
-        Do While Not EOF(FileNum)
-            Line Input #FileNum, TextLine
+        ' Check if the line contains S1
+        If InStr(TextLine, "S1") > 0 Then
+            S1Found = True ' S1 is found, start looking for keywords
             
-            ' Check if the line contains the current security
-            If InStr(TextLine, CurrentSecurity) > 0 Then
-                SecurityFound = True ' Security found
-                
-            ' Once the security is found, look for "Total Admissions" or "Total Withdrawals"
-            ElseIf SecurityFound Then
-                ' Check for "Total Admissions"
-                If InStr(TextLine, "Total Admissions") > 0 Then
-                    Pos = InStr(TextLine, "Total Admissions")
-                    ' Parse the second number after the keyword
-                    AdmissionsValue = GetSecondNumber(TextLine, Pos + Len("Total Admissions"))
-                
-                ' Check for "Total Withdrawals"
-                ElseIf InStr(TextLine, "Total Withdrawals") > 0 Then
-                    Pos = InStr(TextLine, "Total Withdrawals")
-                    ' Parse the second number after the keyword
-                    WithdrawalsValue = GetSecondNumber(TextLine, Pos + Len("Total Withdrawals"))
-                End If
-                
-                ' Move to the next security once both admissions and withdrawals are found
-                If AdmissionsValue <> "" And WithdrawalsValue <> "" Then Exit Do
+        ElseIf InStr(TextLine, "S2") > 0 Then
+            ' Exit the loop if S2 is found
+            Exit Do
+            
+        ElseIf S1Found Then
+            ' Check for "TOTAL ADMISSIONS:"
+            If InStr(TextLine, "TOTAL ADMISSIONS:") > 0 Then
+                Pos = InStr(TextLine, "TOTAL ADMISSIONS:")
+                ' Parse the second number after the keyword
+                AdmissionsValue = GetSecondNumber(TextLine, Pos + Len("TOTAL ADMISSIONS:"))
+            
+            ' Check for "TOTAL WITHDRAWALS:"
+            ElseIf InStr(TextLine, "TOTAL WITHDRAWALS:") > 0 Then
+                Pos = InStr(TextLine, "TOTAL WITHDRAWALS:")
+                ' Parse the second number after the keyword
+                WithdrawalsValue = GetSecondNumber(TextLine, Pos + Len("TOTAL WITHDRAWALS:"))
             End If
-        Loop
-        
-        ' Write the values to the appropriate cells in the Excel sheet
-        If AdmissionsValue <> "" Then
-            Cells(7, i + 2).Value = AdmissionsValue ' Row 7, columns B:E
+            
+            ' Exit the loop if both admissions and withdrawals are found
+            If AdmissionsValue <> "" And WithdrawalsValue <> "" Then Exit Do
         End If
-        
-        If WithdrawalsValue <> "" Then
-            Cells(8, i + 2).Value = WithdrawalsValue ' Row 8, columns B:E
-        End If
-        
-        ' Reset file pointer to the beginning for next security
-        Seek FileNum, 1
-    Next i
+    Loop
     
     ' Close the file
     Close FileNum
+    
+    ' Write the values to the Excel sheet
+    If AdmissionsValue <> "" Then
+        Cells(7, 2).Value = AdmissionsValue ' Column B, Row 7
+    End If
+    
+    If WithdrawalsValue <> "" Then
+        Cells(8, 2).Value = WithdrawalsValue ' Column B, Row 8
+    End If
 End Sub
 
 ' Helper function to extract the second number from the text line
