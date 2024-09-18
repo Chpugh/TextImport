@@ -10,7 +10,6 @@ Sub ParseTextFileForSecurities()
     Dim Pos As Integer
     Dim AdmissionsValue As String
     Dim WithdrawalsValue As String
-    Dim KeywordFound As Boolean
     
     ' List of securities (S1, S2, S3, S4) - Correspond to columns B, C, D, E
     Securities = Array("S1", "S2", "S3", "S4")
@@ -39,22 +38,30 @@ Sub ParseTextFileForSecurities()
         ' Loop through the securities to check if the current line contains one of them
         For Each CurrentSecurity In Securities
             If InStr(TextLine, CurrentSecurity) > 0 Then
-                SecurityIndex = Application.Match(CurrentSecurity, Securities, 0) - 1
-                Debug.Print "Currently on security: " & Securities(SecurityIndex) ' Prints to Immediate Window
+                Debug.Print "Currently on security: " & CurrentSecurity ' Prints to Immediate Window
                 Exit For
             End If
         Next CurrentSecurity
         
-        ' If a security is found, process keywords for that security
-        If SecurityIndex >= 0 Then
+        ' Now, based on the found CurrentSecurity, process keywords for that security
+        If CurrentSecurity <> "" Then
             ' Check for "TOTAL ADMISSIONS:"
             If InStr(TextLine, "TOTAL ADMISSIONS:") > 0 Then
                 Pos = InStr(TextLine, "TOTAL ADMISSIONS:")
                 ' Extract the second number after the keyword
                 AdmissionsValue = GetSecondNumber(TextLine, Pos + Len("TOTAL ADMISSIONS:"))
-                Debug.Print "Admissions for " & Securities(SecurityIndex) & ": " & AdmissionsValue
-                ' Place value in the corresponding cell (row 7, column based on SecurityIndex)
-                Cells(7, SecurityIndex + 2).Value = AdmissionsValue
+                Debug.Print "Admissions for " & CurrentSecurity & ": " & AdmissionsValue
+                
+                ' Based on CurrentSecurity, import into the appropriate column
+                If CurrentSecurity = "S1" Then
+                    Cells(7, 2).Value = AdmissionsValue ' Column B, Row 7
+                ElseIf CurrentSecurity = "S2" Then
+                    Cells(7, 3).Value = AdmissionsValue ' Column C, Row 7
+                ElseIf CurrentSecurity = "S3" Then
+                    Cells(7, 4).Value = AdmissionsValue ' Column D, Row 7
+                ElseIf CurrentSecurity = "S4" Then
+                    Cells(7, 5).Value = AdmissionsValue ' Column E, Row 7
+                End If
             End If
             
             ' Check for "TOTAL WITHDRAWALS:"
@@ -62,9 +69,18 @@ Sub ParseTextFileForSecurities()
                 Pos = InStr(TextLine, "TOTAL WITHDRAWALS:")
                 ' Extract the second number after the keyword
                 WithdrawalsValue = GetSecondNumber(TextLine, Pos + Len("TOTAL WITHDRAWALS:"))
-                Debug.Print "Withdrawals for " & Securities(SecurityIndex) & ": " & WithdrawalsValue
-                ' Place value in the corresponding cell (row 8, column based on SecurityIndex)
-                Cells(8, SecurityIndex + 2).Value = WithdrawalsValue
+                Debug.Print "Withdrawals for " & CurrentSecurity & ": " & WithdrawalsValue
+                
+                ' Based on CurrentSecurity, import into the appropriate column
+                If CurrentSecurity = "S1" Then
+                    Cells(8, 2).Value = WithdrawalsValue ' Column B, Row 8
+                ElseIf CurrentSecurity = "S2" Then
+                    Cells(8, 3).Value = WithdrawalsValue ' Column C, Row 8
+                ElseIf CurrentSecurity = "S3" Then
+                    Cells(8, 4).Value = WithdrawalsValue ' Column D, Row 8
+                ElseIf CurrentSecurity = "S4" Then
+                    Cells(8, 5).Value = WithdrawalsValue ' Column E, Row 8
+                End If
             End If
         End If
     Next i
