@@ -85,7 +85,7 @@ Sub ParseTextFileForSecurities()
                 ElseIf CurrentSecurity = "S3" Then
                     Cells(8, 4).Value = -(WithdrawalsValue) ' Column D, Row 8
                 ElseIf CurrentSecurity = "S4" Then
-                    Cells(8, 5).Value = WithdrawalsValue ' Column E, Row 8
+                    Cells(8, 5).Value = -(WithdrawalsValue) ' Column E, Row 8
                 End If
             End If
         End If
