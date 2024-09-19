@@ -1,0 +1,13 @@
+' Loop through columns B to E (2 to 5) and set empty cells to 0
+Dim col As Integer
+For col = 2 To 5
+    ' Check and fill row 7 (Admissions)
+    If IsEmpty(Cells(7, col)) Then
+        Cells(7, col).Value = 0
+    End If
+    
+    ' Check and fill row 8 (Withdrawals)
+    If IsEmpty(Cells(8, col)) Then
+        Cells(8, col).Value = 0
+    End If
+Next col
