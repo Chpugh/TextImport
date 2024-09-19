@@ -12,3 +12,29 @@ Sub PickFile()
         MsgBox "No file was selected.", vbExclamation
     End If
 End Sub
+
+
+
+Sub PickFileFromSpecificFolder()
+    Dim FilePath As String
+    Dim FolderPath As String
+    
+    ' Set the folder path where the file is located
+    FolderPath = "C:\path\to\your\folder"
+    
+    ' Change the current directory to the specified folder
+    On Error Resume Next ' If the folder does not exist, handle the error
+    ChDir FolderPath
+    On Error GoTo 0 ' Re-enable normal error handling
+    
+    ' Open the file dialog, starting in the specified folder
+    FilePath = Application.GetOpenFilename("Text Files (*.txt), *.txt, All Files (*.*), *.*", , "Select a File")
+    
+    ' Check if the user canceled (returns False if canceled)
+    If FilePath <> "False" Then
+        MsgBox "You selected: " & FilePath, vbInformation
+        ' You can now use FilePath to open the file or perform other actions
+    Else
+        MsgBox "No file was selected.", vbExclamation
+    End If
+End Sub
