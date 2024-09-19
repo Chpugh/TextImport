@@ -1,0 +1,14 @@
+Sub PickFile()
+    Dim FilePath As String
+    
+    ' Open the file dialog to select a file
+    FilePath = Application.GetOpenFilename("Text Files (*.txt), *.txt, All Files (*.*), *.*", , "Select a File")
+    
+    ' Check if the user canceled (returns False if canceled)
+    If FilePath <> "False" Then
+        MsgBox "You selected: " & FilePath, vbInformation
+        ' You can now use FilePath to open the file or perform other actions
+    Else
+        MsgBox "No file was selected.", vbExclamation
+    End If
+End Sub
