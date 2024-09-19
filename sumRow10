@@ -1,9 +1,9 @@
-Sub SumRow10()
-    Dim SumValue As Double
+Sub SumColumns()
+    Dim col As Integer
     
-    ' Calculate the sum of values in row 10 (columns B to E)
-    SumValue = Application.WorksheetFunction.Sum(Range("B10:E10"))
-    
-    ' Place the sum in a specific cell, e.g., F10
-    Cells(10, 6).Value = SumValue ' Column F (6th column), row 10
+    ' Loop through columns B to E (2 to 5)
+    For col = 2 To 5
+        ' Place the sum of rows 7 and 8 in row 10 for the current column
+        Cells(10, col).Formula = "=SUM(" & Cells(7, col).Address & ":" & Cells(8, col).Address & ")"
+    Next col
 End Sub
