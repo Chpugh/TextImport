@@ -1,0 +1,37 @@
+Sub FindUnapprovedInTextFile()
+    Dim FilePath As String
+    Dim TextLine As String
+    Dim FileNum As Integer
+    Dim Found As Boolean
+    
+    ' Specify the file path to the text file
+    FilePath = "C:\path\to\your\file.txt"
+    
+    ' Open the text file for reading
+    FileNum = FreeFile
+    Open FilePath For Input As FileNum
+    
+    ' Initialize Found variable to False
+    Found = False
+    
+    ' Loop through each line in the text file
+    Do While Not EOF(FileNum)
+        Line Input #FileNum, TextLine ' Read a line from the file
+        
+        ' Check if the line contains the word "unapproved" (case-insensitive)
+        If InStr(1, TextLine, "unapproved", vbTextCompare) > 0 Then
+            Found = True
+            Exit Do ' Exit the loop as soon as "unapproved" is found
+        End If
+    Loop
+    
+    ' Close the file after reading
+    Close FileNum
+    
+    ' Message box based on whether "unapproved" was found or not
+    If Found Then
+        MsgBox "The word 'unapproved' was found in the text file.", vbInformation
+    Else
+        MsgBox "The word 'unapproved' was not found in the text file.", vbInformation
+    End If
+End Sub
