@@ -17,6 +17,11 @@ Function GetFormattedPriceUnits(TextLine As String, Keyword As String) As String
             If IsNumeric(Parts(i)) Then
                 If FirstNumber = 0 Then
                     FirstNumber = CDbl(Parts(i)) ' First number (units)
+                    ' Exit if the first number is zero
+                    If FirstNumber = 0 Then
+                        GetFormattedPriceUnits = ""
+                        Exit Function
+                    End If
                 Else
                     SecondNumber = CDbl(Parts(i)) ' Second number (price)
                     Exit For ' Once both numbers are found, exit loop
