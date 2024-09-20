@@ -1,60 +1,53 @@
-Sub ParseApprovedOpenOrder()
-    Dim filePath As String
-    Dim fileContent As String
-    Dim lines As Variant
-    Dim line As String
-    Dim securityColumn As Range
-    Dim securityInfo As String
-    Dim foundOpenOrder As Boolean
-    Dim units As Double
-    Dim price As Double
+Function GetFormattedPriceUnits(TextLine As String, Keyword As String) As String
+    Dim Pos As Long
+    Dim FirstNumber As Double
+    Dim SecondNumber As Double
+    Dim Parts As Variant
     Dim i As Integer
-    Dim ws As Worksheet
     
-    ' Set your file path and worksheet
-    filePath = "C:\path\to\your\textfile.txt"
-    Set ws = ThisWorkbook.Sheets("Sheet1")
+    ' Find the position of the keyword in the text line
+    Pos = InStr(TextLine, Keyword)
     
-    ' Read the entire content of the text file
-    fileContent = CreateObject("Scripting.FileSystemObject").OpenTextFile(filePath, 1).ReadAll
-    lines = Split(fileContent, vbNewLine)
-    
-    ' Set your SecurityInfo variable (the column will be determined by this variable)
-    securityInfo = "S1" ' Example security; replace with your logic to determine the correct SecurityInfo
-    
-    ' Determine which column corresponds to the security
-    Set securityColumn = ws.Rows(1).Find(securityInfo, LookIn:=xlValues, LookAt:=xlWhole)
-    
-    If Not securityColumn Is Nothing Then
-        ' Loop through each line in the text file
-        For i = LBound(lines) To UBound(lines)
-            line = Trim(lines(i))
-            
-            ' Check for the "approved open order" keyword
-            If InStr(1, line, "approved open order", vbTextCompare) > 0 Then
-                foundOpenOrder = True
-                
-                ' Extract units and price (assuming they are the next two numbers on the same line)
-                units = CDbl(Split(line)(UBound(Split(line)) - 1))
-                price = CDbl(Split(line)(UBound(Split(line))))
-                
-                ' Exit the loop if units is zero
-                If units = 0 Then
-                    Exit For
+    If Pos > 0 Then
+        ' Split the text line into an array to extract numbers
+        Parts = Split(Mid(TextLine, Pos + Len(Keyword)))
+        
+        ' Loop through the parts to find the first and second numbers
+        For i = LBound(Parts) To UBound(Parts)
+            If IsNumeric(Parts(i)) Then
+                If FirstNumber = 0 Then
+                    FirstNumber = CDbl(Parts(i)) ' First number (units)
+                Else
+                    SecondNumber = CDbl(Parts(i)) ' Second number (price)
+                    Exit For ' Once both numbers are found, exit loop
                 End If
-                
-                ' Format the value as "price/units" and import into row 9 in the correct column
-                ws.Cells(9, securityColumn.Column).Value = price & "/" & units
-                
-                ' Exit loop once the data is found and imported
-                Exit For
             End If
         Next i
         
-        If Not foundOpenOrder Then
-            MsgBox "No 'approved open order' found in the file."
+        ' Format the result as second number/first number
+        If FirstNumber <> 0 And SecondNumber <> 0 Then
+            GetFormattedPriceUnits = SecondNumber & "/" & FirstNumber
+        Else
+            GetFormattedPriceUnits = ""
         End If
     Else
-        MsgBox "SecurityInfo not found on the sheet."
+        GetFormattedPriceUnits = ""
     End If
-End Sub
+End Function
+
+
+If InStr(TextLine, "approved open order") > 0 Then
+    Dim formattedPriceUnits As String
+    formattedPriceUnits = GetFormattedPriceUnits(TextLine, "approved open order")
+    
+    ' Based on CurrentSecurity, import into the appropriate column
+    If CurrentSecurity = "S1" Then
+        Cells(9, 2).Value = formattedPriceUnits ' Column B, Row 9
+    ElseIf CurrentSecurity = "S2" Then
+        Cells(9, 3).Value = formattedPriceUnits ' Column C, Row 9
+    ElseIf CurrentSecurity = "S3" Then
+        Cells(9, 4).Value = formattedPriceUnits ' Column D, Row 9
+    ElseIf CurrentSecurity = "S4" Then
+        Cells(9, 5).Value = formattedPriceUnits ' Column E, Row 9
+    End If
+End If
