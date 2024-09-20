@@ -6,8 +6,8 @@ Sub ParseApprovedOpenOrder()
     Dim securityColumn As Range
     Dim securityInfo As String
     Dim foundOpenOrder As Boolean
-    Dim units As String
-    Dim price As String
+    Dim units As Double
+    Dim price As Double
     Dim i As Integer
     Dim ws As Worksheet
     
@@ -33,9 +33,15 @@ Sub ParseApprovedOpenOrder()
             ' Check for the "approved open order" keyword
             If InStr(1, line, "approved open order", vbTextCompare) > 0 Then
                 foundOpenOrder = True
-                ' Parse the next two numbers (units and price)
-                units = Split(line)(UBound(Split(line)) - 1)
-                price = Split(line)(UBound(Split(line)))
+                
+                ' Extract units and price (assuming they are the next two numbers on the same line)
+                units = CDbl(Split(line)(UBound(Split(line)) - 1))
+                price = CDbl(Split(line)(UBound(Split(line))))
+                
+                ' Exit the loop if units is zero
+                If units = 0 Then
+                    Exit For
+                End If
                 
                 ' Format the value as "price/units" and import into row 9 in the correct column
                 ws.Cells(9, securityColumn.Column).Value = price & "/" & units
