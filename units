@@ -1,0 +1,54 @@
+Sub ParseApprovedOpenOrder()
+    Dim filePath As String
+    Dim fileContent As String
+    Dim lines As Variant
+    Dim line As String
+    Dim securityColumn As Range
+    Dim securityInfo As String
+    Dim foundOpenOrder As Boolean
+    Dim units As String
+    Dim price As String
+    Dim i As Integer
+    Dim ws As Worksheet
+    
+    ' Set your file path and worksheet
+    filePath = "C:\path\to\your\textfile.txt"
+    Set ws = ThisWorkbook.Sheets("Sheet1")
+    
+    ' Read the entire content of the text file
+    fileContent = CreateObject("Scripting.FileSystemObject").OpenTextFile(filePath, 1).ReadAll
+    lines = Split(fileContent, vbNewLine)
+    
+    ' Set your SecurityInfo variable (the column will be determined by this variable)
+    securityInfo = "S1" ' Example security; replace with your logic to determine the correct SecurityInfo
+    
+    ' Determine which column corresponds to the security
+    Set securityColumn = ws.Rows(1).Find(securityInfo, LookIn:=xlValues, LookAt:=xlWhole)
+    
+    If Not securityColumn Is Nothing Then
+        ' Loop through each line in the text file
+        For i = LBound(lines) To UBound(lines)
+            line = Trim(lines(i))
+            
+            ' Check for the "approved open order" keyword
+            If InStr(1, line, "approved open order", vbTextCompare) > 0 Then
+                foundOpenOrder = True
+                ' Parse the next two numbers (units and price)
+                units = Split(line)(UBound(Split(line)) - 1)
+                price = Split(line)(UBound(Split(line)))
+                
+                ' Format the value as "price/units" and import into row 9 in the correct column
+                ws.Cells(9, securityColumn.Column).Value = price & "/" & units
+                
+                ' Exit loop once the data is found and imported
+                Exit For
+            End If
+        Next i
+        
+        If Not foundOpenOrder Then
+            MsgBox "No 'approved open order' found in the file."
+        End If
+    Else
+        MsgBox "SecurityInfo not found on the sheet."
+    End If
+End Sub
