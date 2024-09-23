@@ -13,7 +13,9 @@ Sub ParseTextFileForSecurities()
 
     Dim SecurityInfo as String
 
-    Dim col As Integer
+    Dim SumUpCol As Integer
+
+    Dim EmptyCol As Integer
     
     
     ' List of securities (S1, S2, S3, S4) - Correspond to columns B, C, D, E
@@ -98,10 +100,27 @@ Sub ParseTextFileForSecurities()
 '------------------------- sumUp
 
 	    ' Loop through columns B to E (2 to 5)
-	    For SumUp = 2 To 5
+	    For SumUpCol = 2 To 5
 	        ' Place the sum of rows 7 and 8 in row 10 for the current column
 	        Cells(10, SumUp).Formula = "=SUM(" & Cells(7, SumUp).Address & ":" & Cells(8, SumUp).Address & ")"
 	    Next SumUp
+
+'-------------------------Handling empty cells
+		' Loop through columns B to E (2 to 5) and set empty cells to 0
+		For EmptyCol = 2 To 5
+		    ' Check and fill row 7 (Admissions)
+		    If IsEmpty(Cells(7, EmptyCol)) Then
+		        Cells(7, EmptyCol).Value = 0
+		    End If
+		    
+		    ' Check and fill row 8 (Withdrawals)
+		    If IsEmpty(Cells(8, EmptyCol)) Then
+		        Cells(8, EmptyCol).Value = 0
+		    End If
+		Next col
+
+'-----------------------Looking for the word unapproved
+
 
 End Sub
 
