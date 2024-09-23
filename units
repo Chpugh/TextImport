@@ -56,3 +56,64 @@ If InStr(TextLine, "approved open order") > 0 Then
         Cells(9, 5).Value = formattedPriceUnits ' Column E, Row 9
     End If
 End If
+
+' second try 
+Sub ParseApprovedOpenOrder()
+    Dim FilePath As String
+    Dim FileContent As String
+    Dim SecurityInfo As String ' Assuming SecurityInfo variable is already set
+    Dim Units As Double
+    Dim Price As Double
+    Dim Col As Integer ' This is the column where the data will be inserted
+    Dim Row As Integer
+    Dim Pos As Long
+    Dim Line As String
+    Dim Lines() As String
+    Dim i As Long
+    Dim Words() As String
+
+    ' Set file path
+    FilePath = "C:\path\to\your\file.txt"
+
+    ' Open the file and read the content
+    Open FilePath For Input As #1
+    FileContent = Input(LOF(1), 1)
+    Close #1
+    
+    ' Split the file content into lines
+    Lines = Split(FileContent, vbCrLf)
+    
+    ' Set the column based on SecurityInfo
+    Col = Range(SecurityInfo).Column ' Assuming SecurityInfo refers to a column letter
+    
+    ' Set the row
+    Row = 9 ' Fixed row as per your requirement
+    
+    ' Loop through each line of the file
+    For i = LBound(Lines) To UBound(Lines)
+        Line = Lines(i)
+        
+        ' Check if the line contains "approved open order"
+        If InStr(1, Line, "approved open order", vbTextCompare) > 0 Then
+            ' Split the line into words to extract numbers
+            Words = Split(Line, " ")
+            
+            ' Assuming the format is: "approved open order <Units> <Price>"
+            ' Find the index of "approved open order" and get the numbers after it
+            Pos = InStr(1, Line, "approved open order", vbTextCompare)
+            Units = Val(Words(UBound(Words) - 1)) ' First number before last
+            Price = Val(Words(UBound(Words)))     ' Last number
+            
+            ' Exit if Units is 0
+            If Units = 0 Then
+                Exit Sub
+            End If
+            
+            ' Insert the data in the correct cell in the format price/units
+            Cells(Row, Col).Value = Price & "/" & Units
+            
+            ' Exit the loop after finding the first occurrence
+            Exit Sub
+        End If
+    Next i
+End Sub
