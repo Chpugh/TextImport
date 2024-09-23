@@ -97,6 +97,11 @@ Sub ParseTextFileForSecurities()
             End If
 '------------------------Handle unit trades
 
+
+
+
+
+'-------------------------------------------------------- end of unit trade code
         End If
     Next i
 '------------------------- sumUp
