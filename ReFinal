@@ -10,6 +10,11 @@ Sub ParseTextFileForSecurities()
     Dim Pos As Integer
     Dim AdmissionsValue As String
     Dim WithdrawalsValue As String
+
+    Dim SecurityInfo as String
+
+    Dim col As Integer
+    
     
     ' List of securities (S1, S2, S3, S4) - Correspond to columns B, C, D, E
     Securities = Array("S1", "S2", "S3", "S4")
@@ -90,6 +95,14 @@ Sub ParseTextFileForSecurities()
             End If
         End If
     Next i
+'------------------------- sumUp
+
+	    ' Loop through columns B to E (2 to 5)
+	    For SumUp = 2 To 5
+	        ' Place the sum of rows 7 and 8 in row 10 for the current column
+	        Cells(10, SumUp).Formula = "=SUM(" & Cells(7, SumUp).Address & ":" & Cells(8, SumUp).Address & ")"
+	    Next SumUp
+
 End Sub
 
 ' Helper function to extract the second number from the text line
