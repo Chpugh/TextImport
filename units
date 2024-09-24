@@ -1,94 +1,63 @@
-Sub ParseOpenOrders()
+Sub ParseOpenOrder()
     Dim FilePath As String
     Dim TextLine As String
-    Dim FileNum As Integer
-    Dim Lines() As String
     Dim Units As Double
     Dim Price As Double
+    Dim unitPrice As String
+    Dim FileNumber As Integer
+    Dim FoundPos As Long
+    Dim Parts() As String
     Dim i As Integer
-    Dim Pos As Integer
     
-    ' Open file dialog to select the text file
-    FilePath = Application.GetOpenFilename("Text Files (*.txt), *.txt, All Files (*.*), *.*", , "Select a File")
+    ' Set file path
+    FilePath = "C:\Path\To\Your\TextFile.txt" ' Change to your actual file path
     
-    If FilePath = "False" Then
-        MsgBox "No file was selected.", vbExclamation
-        Exit Sub
-    End If
+    ' Open the file
+    FileNumber = FreeFile
+    Open FilePath For Input As FileNumber
     
-    ' Open the text file for reading
-    FileNum = FreeFile
-    Open FilePath For Input As FileNum
-
-    ' Read all lines from the file into an array
-    TextLine = Input$(LOF(FileNum), FileNum)
-    Lines = Split(TextLine, vbCrLf)
-    Close FileNum
-
-    ' Loop through each line
-    For i = LBound(Lines) To UBound(Lines)
-        TextLine = Lines(i)
+    ' Loop through each line of the text file
+    Do While Not EOF(FileNumber)
+        Line Input #FileNumber, TextLine
         
-        ' Check for the "open order" keyword
-        If InStr(TextLine, "open order") > 0 Then
-            ' Extract units and price
-            Pos = InStr(TextLine, "open order") + Len("open order")
-            Units = GetFirstNumber(TextLine, Pos)
-            Price = GetSecondNumber(TextLine, Pos + Len(CStr(Units)))
+        ' Look for the keyword "open order"
+        FoundPos = InStr(1, TextLine, "open order", vbTextCompare)
+        
+        If FoundPos > 0 Then
+            ' Split the line into parts to find numbers
+            Parts = Split(TextLine, " ")
             
-            ' Check if units are 0, if so, exit
-            If Units = 0 Then
-                Exit For
-            End If
-            
-            ' Import price/units into row 9 columns B:E
-            For j = 2 To 5
-                Cells(9, j).Value = Price / Units
-            Next j
-            
-            ' Exit the loop after processing the first "open order"
-            Exit For
+            ' Loop through the parts to find the numbers
+            For i = 0 To UBound(Parts)
+                If IsNumeric(Parts(i)) Then
+                    ' First number is Units
+                    Units = CDbl(Parts(i))
+                    
+                    ' Exit loop if Units is 0
+                    If Units = 0 Then
+                        Close FileNumber
+                        Exit Sub
+                    End If
+                    
+                    ' Continue to find the next number (Price)
+                    If i + 1 <= UBound(Parts) And IsNumeric(Parts(i + 1)) Then
+                        Price = CDbl(Parts(i + 1))
+                        
+                        ' Store the price / units as a string
+                        unitPrice = Price & " / " & Units
+                        
+                        ' You can now use the unitPrice variable as needed
+                        ' Example: Debug.Print unitPrice
+                        
+                        ' Exit after finding the first valid "open order"
+                        Close FileNumber
+                        Exit Sub
+                    End If
+                End If
+            Next i
         End If
-    Next i
+    Loop
+    
+    ' Close the file
+    Close FileNumber
 End Sub
-
-' Helper function to extract the first number from the text line
-Function GetFirstNumber(ByVal TextLine As String, ByVal StartPos As Integer) As Double
-    Dim Parts As Variant
-    Dim i As Integer
-    Dim Counter As Integer
-
-    Parts = Split(Mid(TextLine, StartPos))
-    Counter = 0
-
-    For i = LBound(Parts) To UBound(Parts)
-        If IsNumeric(Parts(i)) Then
-            GetFirstNumber = CDbl(Parts(i))
-            Exit Function
-        End If
-    Next i
-
-    GetFirstNumber = 0
-End Function
-
-' Helper function to extract the second number from the text line
-Function GetSecondNumber(ByVal TextLine As String, ByVal StartPos As Integer) As Double
-    Dim Parts As Variant
-    Dim i As Integer
-    Dim Counter As Integer
-
-    Parts = Split(Mid(TextLine, StartPos))
-    Counter = 0
-
-    For i = LBound(Parts) To UBound(Parts)
-        If IsNumeric(Parts(i)) Then
-            Counter = Counter + 1
-            If Counter = 2 Then
-                GetSecondNumber = CDbl(Parts(i))
-                Exit Function
-            End If
-        End If
-    Next i
-
-    GetSecondNumber = 0
-End Function
