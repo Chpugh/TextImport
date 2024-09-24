@@ -1,119 +1,94 @@
-Function GetFormattedPriceUnits(TextLine As String, Keyword As String) As String
-    Dim Pos As Long
-    Dim FirstNumber As Double
-    Dim SecondNumber As Double
-    Dim Parts As Variant
-    Dim i As Integer
-    
-    ' Find the position of the keyword in the text line
-    Pos = InStr(TextLine, Keyword)
-    
-    If Pos > 0 Then
-        ' Split the text line into an array to extract numbers
-        Parts = Split(Mid(TextLine, Pos + Len(Keyword)))
-        
-        ' Loop through the parts to find the first and second numbers
-        For i = LBound(Parts) To UBound(Parts)
-            If IsNumeric(Parts(i)) Then
-                If FirstNumber = 0 Then
-                    FirstNumber = CDbl(Parts(i)) ' First number (units)
-                    ' Exit if the first number is zero
-                    If FirstNumber = 0 Then
-                        GetFormattedPriceUnits = ""
-                        Exit Function
-                    End If
-                Else
-                    SecondNumber = CDbl(Parts(i)) ' Second number (price)
-                    Exit For ' Once both numbers are found, exit loop
-                End If
-            End If
-        Next i
-        
-        ' Format the result as second number/first number
-        If FirstNumber <> 0 And SecondNumber <> 0 Then
-            GetFormattedPriceUnits = SecondNumber & "/" & FirstNumber
-        Else
-            GetFormattedPriceUnits = ""
-        End If
-    Else
-        GetFormattedPriceUnits = ""
-    End If
-End Function
-
-
-If InStr(TextLine, "approved open order") > 0 Then
-    Dim formattedPriceUnits As String
-    formattedPriceUnits = GetFormattedPriceUnits(TextLine, "approved open order")
-    
-    ' Based on CurrentSecurity, import into the appropriate column
-    If CurrentSecurity = "S1" Then
-        Cells(9, 2).Value = formattedPriceUnits ' Column B, Row 9
-    ElseIf CurrentSecurity = "S2" Then
-        Cells(9, 3).Value = formattedPriceUnits ' Column C, Row 9
-    ElseIf CurrentSecurity = "S3" Then
-        Cells(9, 4).Value = formattedPriceUnits ' Column D, Row 9
-    ElseIf CurrentSecurity = "S4" Then
-        Cells(9, 5).Value = formattedPriceUnits ' Column E, Row 9
-    End If
-End If
-
-' second try 
-Sub ParseApprovedOpenOrder()
+Sub ParseOpenOrders()
     Dim FilePath As String
-    Dim FileContent As String
-    Dim SecurityInfo As String ' Assuming SecurityInfo variable is already set
+    Dim TextLine As String
+    Dim FileNum As Integer
+    Dim Lines() As String
     Dim Units As Double
     Dim Price As Double
-    Dim Col As Integer ' This is the column where the data will be inserted
-    Dim Row As Integer
-    Dim Pos As Long
-    Dim Line As String
-    Dim Lines() As String
-    Dim i As Long
-    Dim Words() As String
+    Dim i As Integer
+    Dim Pos As Integer
+    
+    ' Open file dialog to select the text file
+    FilePath = Application.GetOpenFilename("Text Files (*.txt), *.txt, All Files (*.*), *.*", , "Select a File")
+    
+    If FilePath = "False" Then
+        MsgBox "No file was selected.", vbExclamation
+        Exit Sub
+    End If
+    
+    ' Open the text file for reading
+    FileNum = FreeFile
+    Open FilePath For Input As FileNum
 
-    ' Set file path
-    FilePath = "C:\path\to\your\file.txt"
+    ' Read all lines from the file into an array
+    TextLine = Input$(LOF(FileNum), FileNum)
+    Lines = Split(TextLine, vbCrLf)
+    Close FileNum
 
-    ' Open the file and read the content
-    Open FilePath For Input As #1
-    FileContent = Input(LOF(1), 1)
-    Close #1
-    
-    ' Split the file content into lines
-    Lines = Split(FileContent, vbCrLf)
-    
-    ' Set the column based on SecurityInfo
-    Col = Range(SecurityInfo).Column ' Assuming SecurityInfo refers to a column letter
-    
-    ' Set the row
-    Row = 9 ' Fixed row as per your requirement
-    
-    ' Loop through each line of the file
+    ' Loop through each line
     For i = LBound(Lines) To UBound(Lines)
-        Line = Lines(i)
+        TextLine = Lines(i)
         
-        ' Check if the line contains "approved open order"
-        If InStr(1, Line, "approved open order", vbTextCompare) > 0 Then
-            ' Split the line into words to extract numbers
-            Words = Split(Line, " ")
+        ' Check for the "open order" keyword
+        If InStr(TextLine, "open order") > 0 Then
+            ' Extract units and price
+            Pos = InStr(TextLine, "open order") + Len("open order")
+            Units = GetFirstNumber(TextLine, Pos)
+            Price = GetSecondNumber(TextLine, Pos + Len(CStr(Units)))
             
-            ' Assuming the format is: "approved open order <Units> <Price>"
-            ' Find the index of "approved open order" and get the numbers after it
-            Pos = InStr(1, Line, "approved open order", vbTextCompare)
-            Units = Val(Words(UBound(Words) - 1)) ' First number before last
-            Price = Val(Words(UBound(Words)))     ' Last number
-            
-            ' Exit if Units is 0
+            ' Check if units are 0, if so, exit
             If Units = 0 Then
-                Exit Sub
+                Exit For
             End If
             
-            ' Insert the data in the correct cell in the format price/units
-            Cells(Row, Col).Value = Price & "/" & Units
+            ' Import price/units into row 9 columns B:E
+            For j = 2 To 5
+                Cells(9, j).Value = Price / Units
+            Next j
             
-            ' Exit the loop after finding the first occurrence
-            Exit Sub
+            ' Exit the loop after processing the first "open order"
+            Exit For
         End If
     Next i
 End Sub
+
+' Helper function to extract the first number from the text line
+Function GetFirstNumber(ByVal TextLine As String, ByVal StartPos As Integer) As Double
+    Dim Parts As Variant
+    Dim i As Integer
+    Dim Counter As Integer
+
+    Parts = Split(Mid(TextLine, StartPos))
+    Counter = 0
+
+    For i = LBound(Parts) To UBound(Parts)
+        If IsNumeric(Parts(i)) Then
+            GetFirstNumber = CDbl(Parts(i))
+            Exit Function
+        End If
+    Next i
+
+    GetFirstNumber = 0
+End Function
+
+' Helper function to extract the second number from the text line
+Function GetSecondNumber(ByVal TextLine As String, ByVal StartPos As Integer) As Double
+    Dim Parts As Variant
+    Dim i As Integer
+    Dim Counter As Integer
+
+    Parts = Split(Mid(TextLine, StartPos))
+    Counter = 0
+
+    For i = LBound(Parts) To UBound(Parts)
+        If IsNumeric(Parts(i)) Then
+            Counter = Counter + 1
+            If Counter = 2 Then
+                GetSecondNumber = CDbl(Parts(i))
+                Exit Function
+            End If
+        End If
+    Next i
+
+    GetSecondNumber = 0
+End Function
