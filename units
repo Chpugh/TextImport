@@ -75,8 +75,9 @@ Sub ParseOpenOrder()
     Dim finalPrice As Double
     Dim unitPrice As String
     Dim KeyWord As String
-    Dim SplitLine() As String
-    Dim i As Integer
+    Dim Position As Long
+    Dim TextAfterKeyword As String
+    Dim Values() As String
     
     ' Set the keyword and file path
     KeyWord = "approved open order"
@@ -91,39 +92,38 @@ Sub ParseOpenOrder()
         Line Input #FileNum, LineOfText
         
         ' Check if the line contains the keyword
-        If InStr(1, LineOfText, KeyWord, vbTextCompare) > 0 Then
-            ' Split the line by spaces or other delimiters
-            SplitLine = Split(LineOfText)
+        Position = InStr(1, LineOfText, KeyWord, vbTextCompare)
+        If Position > 0 Then
+            ' Extract the part of the line after the keyword
+            TextAfterKeyword = Mid(LineOfText, Position + Len(KeyWord))
             
-            ' Look for the first number after the keyword
-            For i = 0 To UBound(SplitLine)
-                If SplitLine(i) = KeyWord Then
-                    ' The next value should be Units
-                    If IsNumeric(SplitLine(i + 1)) Then
-                        Units = CDbl(SplitLine(i + 1))
-                        
-                        ' If Units is 0, exit the loop
-                        If Units = 0 Then
-                            Exit Do
-                        End If
-                        
-                        ' The next value after Units should be Price
-                        If IsNumeric(SplitLine(i + 2)) Then
-                            Price = CDbl(SplitLine(i + 2))
-                            
-                            ' Save Units and Price into finalUnits and finalPrice
-                            finalUnits = Units
-                            finalPrice = Price
-                            
-                            ' Calculate unitPrice as "Price / Units"
-                            unitPrice = finalPrice & " / " & finalUnits
-                            
-                            ' Exit the loop after saving the values
-                            Exit Do
-                        End If
-                    End If
+            ' Split the remaining line by spaces (or any other delimiter if needed)
+            Values = Split(Application.Trim(TextAfterKeyword), " ")
+            
+            ' Check if the first value after the keyword is numeric (Units)
+            If IsNumeric(Values(0)) Then
+                Units = CDbl(Values(0))
+                
+                ' If Units is 0, exit the loop
+                If Units = 0 Then
+                    Exit Do
                 End If
-            Next i
+                
+                ' Check if the next value is numeric (Price)
+                If UBound(Values) > 0 And IsNumeric(Values(1)) Then
+                    Price = CDbl(Values(1))
+                    
+                    ' Save Units and Price into finalUnits and finalPrice
+                    finalUnits = Units
+                    finalPrice = Price
+                    
+                    ' Calculate unitPrice as "Price / Units"
+                    unitPrice = finalPrice & " / " & finalUnits
+                    
+                    ' Exit the loop after saving the values
+                    Exit Do
+                End If
+            End If
         End If
     Loop
     
