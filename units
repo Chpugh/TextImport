@@ -1,68 +1,7 @@
-Sub ParseOpenOrder()
-    Dim FilePath As String
-    Dim TextLine As String
-    Dim Units As Double
-    Dim Price As Double
-    Dim unitPrice As String
-    Dim FileNumber As Integer
-    Dim FoundPos As Long
-    Dim Parts() As String
-    Dim i As Integer
-    
-    ' Set file path
-    FilePath = "C:\Path\To\Your\TextFile.txt" ' Change to your actual file path
-    
-    ' Open the file
-    FileNumber = FreeFile
-    Open FilePath For Input As FileNumber
-    
-    ' Loop through each line of the text file
-    Do While Not EOF(FileNumber)
-        Line Input #FileNumber, TextLine
-        
-        ' Look for the keyword "open order"
-        FoundPos = InStr(1, TextLine, "open order", vbTextCompare)
-        
-        If FoundPos > 0 Then
-            ' Split the line into parts to find numbers
-            Parts = Split(TextLine, " ")
-            
-            ' Loop through the parts to find the numbers
-            For i = 0 To UBound(Parts)
-                If IsNumeric(Parts(i)) Then
-                    ' First number is Units
-                    Units = CDbl(Parts(i))
-                    
-                    ' Exit loop if Units is 0
-                    If Units = 0 Then
-                        Close FileNumber
-                        Exit Sub
-                    End If
-                    
-                    ' Continue to find the next number (Price)
-                    If i + 1 <= UBound(Parts) And IsNumeric(Parts(i + 1)) Then
-                        Price = CDbl(Parts(i + 1))
-                        
-                        ' Store the price / units as a string
-                        unitPrice = Price & " / " & Units
-                        
-                        ' You can now use the unitPrice variable as needed
-                        ' Example: Debug.Print unitPrice
-                        
-                        ' Exit after finding the first valid "open order"
-                        Close FileNumber
-                        Exit Sub
-                    End If
-                End If
-            Next i
-        End If
-    Loop
-    
-    ' Close the file
-    Close FileNumber
-End Sub
 
 
+'working and this saves the units
+'and unit price in a the unitPrice variable
 
 
 Sub ParseOpenOrder()
