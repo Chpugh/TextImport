@@ -65,68 +65,61 @@ End Sub
 
 
 
-Sub ParseApprovedOpenOrder()
+Sub ParseOpenOrder()
     Dim FilePath As String
-    Dim TextLine As String
+    Dim FileNum As Integer
+    Dim LineOfText As String
     Dim Units As Double
     Dim Price As Double
     Dim finalUnits As Double
     Dim finalPrice As Double
     Dim unitPrice As String
-    Dim FileNumber As Integer
-    Dim FoundPos As Long
-    Dim Parts() As String
+    Dim KeyWord As String
+    Dim SplitLine() As String
     Dim i As Integer
-    Dim tempPrice As String
     
-    ' Set file path
-    FilePath = "C:\Path\To\Your\TextFile.txt" ' Change to your actual file path
+    ' Set the keyword and file path
+    KeyWord = "approved open order"
+    FilePath = "C:\path\to\your\file.txt" ' <-- Change this to your file path
+    FileNum = FreeFile
     
-    ' Open the file
-    FileNumber = FreeFile
-    Open FilePath For Input As FileNumber
+    ' Open the text file
+    Open FilePath For Input As FileNum
     
-    ' Loop through each line of the text file
-    Do While Not EOF(FileNumber)
-        Line Input #FileNumber, TextLine
+    ' Loop through each line in the file
+    Do Until EOF(FileNum)
+        Line Input #FileNum, LineOfText
         
-        ' Look for the keyword "approved open order"
-        FoundPos = InStr(1, TextLine, "approved open order", vbTextCompare)
-        
-        If FoundPos > 0 Then
-            ' Split the line into parts to find numbers
-            Parts = Split(TextLine, " ")
+        ' Check if the line contains the keyword
+        If InStr(1, LineOfText, KeyWord, vbTextCompare) > 0 Then
+            ' Split the line by spaces or other delimiters
+            SplitLine = Split(LineOfText)
             
-            ' Loop through the parts to find the numbers
-            For i = 0 To UBound(Parts)
-                If IsNumeric(Parts(i)) Then
-                    ' First number is Units
-                    Units = CDbl(Parts(i))
-                    
-                    ' Exit loop if Units is 0
-                    If Units = 0 Then
-                        Exit Sub
-                    End If
-                    
-                    ' Continue to find the next number (Price)
-                    If i + 1 <= UBound(Parts) Then
-                        ' Remove any non-numeric characters from the price (ignoring -* if necessary)
-                        tempPrice = Replace(Parts(i + 1), "-*", "")
-                        If IsNumeric(tempPrice) Then
-                            Price = CDbl(tempPrice)
+            ' Look for the first number after the keyword
+            For i = 0 To UBound(SplitLine)
+                If SplitLine(i) = KeyWord Then
+                    ' The next value should be Units
+                    If IsNumeric(SplitLine(i + 1)) Then
+                        Units = CDbl(SplitLine(i + 1))
+                        
+                        ' If Units is 0, exit the loop
+                        If Units = 0 Then
+                            Exit Do
+                        End If
+                        
+                        ' The next value after Units should be Price
+                        If IsNumeric(SplitLine(i + 2)) Then
+                            Price = CDbl(SplitLine(i + 2))
                             
-                            ' Store final units and price (they won't change)
+                            ' Save Units and Price into finalUnits and finalPrice
                             finalUnits = Units
                             finalPrice = Price
                             
-                            ' Store finalPrice / finalUnits as a string
+                            ' Calculate unitPrice as "Price / Units"
                             unitPrice = finalPrice & " / " & finalUnits
                             
-                            ' Example: You can use the unitPrice variable as needed
-                            ' Example: Debug.Print unitPrice
-                            
-                            ' Exit after processing the first valid "approved open order"
-                            Exit Sub
+                            ' Exit the loop after saving the values
+                            Exit Do
                         End If
                     End If
                 End If
@@ -135,6 +128,8 @@ Sub ParseApprovedOpenOrder()
     Loop
     
     ' Close the file
-    Close FileNumber
+    Close FileNum
+    
+    ' Display the results (for testing purposes)
+    MsgBox "finalUnits: " & finalUnits & vbCrLf & "finalPrice: " & finalPrice & vbCrLf & "unitPrice: " & unitPrice
 End Sub
-
