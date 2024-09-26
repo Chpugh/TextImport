@@ -17,6 +17,8 @@ Sub ParseOpenOrder()
     Dim Position As Long
     Dim TextAfterKeyword As String
     Dim Values() As String
+
+    dim sumUnites as Double, sumPrice As Double
     
     ' Set the keyword and file path
     KeyWord = "approved open order"
@@ -53,12 +55,26 @@ Sub ParseOpenOrder()
                     Price = CDbl(Values(1))
                     
                     ' Save Units and Price into finalUnits and finalPrice
-                    finalUnits = Units
-                    finalPrice = Price
-                    
-                    ' Calculate unitPrice as "Price / Units"
-                    unitPrice = finalPrice & " / " & finalUnits
-                    
+                    sumUnits = 0
+                    sumPrice = 0
+                    'This is for adding units and price on the same security 
+                    If finalUnits & finalPrice <> 0 Then 
+                        'add up the units and price
+                        sumUnits = finalUnits + Units
+                        sumPrice = finalPrice + Price 
+
+                    'Calculate unitprice as "Price / Units"
+                    unitPrice = sumPrice & " / " & sumUnits
+                ElseIf finalUnits & finalPrice = 0 Then
+                    unitPrice = Price & " / " & Units
+                End if 
+
+                finalUnits = finalUnits + Units
+                finalPrice = finalPrice + Price 
+
+                Units = 0
+                Price = 0
+                    '------------------endadd this is working to where it will add previous price and units to the next it finds
                     ' Exit the loop after saving the values
                     Exit Do
                 End If
