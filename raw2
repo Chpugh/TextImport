@@ -10,13 +10,34 @@ Sub ParseTextFileForSecurities()
     Dim Pos As Integer
     Dim AdmissionsValue As String
     Dim WithdrawalsValue As String
+
+    Dim SecurityInfo As string
+
+    Dim col As Integer 'replaced  blank cells with 0
+    Dim SumUp As Integer ' suming up admissions and withdrawals
+    Dim Found As Boolean ' Checking Unapproved
+    Dim FolderPath As String ' opening folder path
     
     ' List of securities (S1, S2, S3, S4) - Correspond to columns B, C, D, E
     Securities = Array("S1", "S2", "S3", "S4")
     
-    ' Specify the file path to the text file
-    FilePath = "C:\path\to\your\file.txt"
-    
+    ' Set the folder path where the file is located
+    FolderPath = "C:\path\to\your\file.txt"
+
+    ' Change the current directory to the specified folder
+    On Error Resume Next ' If the folder does not exist, handle the error
+    ChDir FolderPath
+    On Error GoTo 0 ' Re-enable normal error handling
+    FilePath = Application.GetOpenFilename("Text Files (*.txt), All Files (*.*), *.*", , "Select a File")
+
+    ' Check if the user canceled (returns False if canceled)
+    If FilePath <> "False" Then
+        MsgBox "You selected: " & FilePath, vbInformation
+        ' You can now use FilePath to open the file or perform other actions
+    Else
+        MsgBox "No file was selected.", vbExclamation
+        Exit Sub
+    End If 
     ' Open the text file for reading
     FileNum = FreeFile
     Open FilePath For Input As FileNum
@@ -30,6 +51,7 @@ Sub ParseTextFileForSecurities()
     
     ' Initialize security index (-1 means no security found yet)
     SecurityIndex = -1
+    foundOpenOrder = False = WHAT DOES THIS DO?
     
     ' Loop through each line using a For loop
     For i = LBound(Lines) To UBound(Lines)
