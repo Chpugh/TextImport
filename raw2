@@ -125,7 +125,14 @@ For col = 2 To 5
     End If
 Next col
 
-End Sub
+    ' Loop through columns B to E (2 to 5)
+    For sumUp = 2 To 5
+        ' Place the sum of rows 7 and 8 in row 10 for the current column
+        Cells(10, sumUp).Formula = "=SUM(" & Cells(7, sumUp).Address & ":" & Cells(8, sumUp).Address & ")"
+    Next sumUp
+
+
+end sub
 
 ' Helper function to extract the second number from the text line
 Function GetSecondNumber(ByVal TextLine As String, ByVal StartPos As Integer) As String
