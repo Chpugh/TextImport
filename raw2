@@ -130,9 +130,38 @@ Next col
         ' Place the sum of rows 7 and 8 in row 10 for the current column
         Cells(10, sumUp).Formula = "=SUM(" & Cells(7, sumUp).Address & ":" & Cells(8, sumUp).Address & ")"
     Next sumUp
-
+    'Check for unapproved and tell the user
+    ' Open the text file for reading
+    FileNum = FreeFile
+    Open FilePath For Input As FileNum
+    
+    ' Initialize Found variable to False
+    Found = False
+    
+    ' Loop through each line in the text file
+    Do While Not EOF(FileNum)
+        Line Input #FileNum, TextLine ' Read a line from the file
+        
+        ' Check if the line contains the word "unapproved" (case-insensitive)
+        If InStr(1, TextLine, "unapproved", vbTextCompare) > 0 Then
+            Found = True
+            Exit Do ' Exit the loop as soon as "unapproved" is found
+        End If
+    Loop
+    
+    ' Close the file after reading
+    Close FileNum
+    
+    ' Message box based on whether "unapproved" was found or not
+    If Found Then
+        MsgBox "The word 'unapproved' was found in the text file.", vbInformation
+    Else
+        MsgBox "The word 'unapproved' was not found in the text file.", vbInformation
+    End If
 
 end sub
+
+
 
 ' Helper function to extract the second number from the text line
 Function GetSecondNumber(ByVal TextLine As String, ByVal StartPos As Integer) As String
