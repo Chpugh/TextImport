@@ -7,3 +7,30 @@ Sub SumColumns()
         Cells(10, col).Formula = "=SUM(" & Cells(7, col).Address & ":" & Cells(8, col).Address & ")"
     Next col
 End Sub
+
+
+
+Sub SumColumnsWithSubtraction()
+    Dim col As Integer
+    Dim vb As Double, vc As Double, vd As Double, ve As Double
+    
+    ' Assign your variable values
+    vb = 10 ' Replace with your actual value for vb
+    vc = 20 ' Replace with your actual value for vc
+    vd = 30 ' Replace with your actual value for vd
+    ve = 40 ' Replace with your actual value for ve
+    
+    ' Loop through columns B to E (2 to 5)
+    For col = 2 To 5
+        Select Case col
+            Case 2 ' Column B
+                Cells(10, col).Formula = "=SUM(" & Cells(7, col).Address & ":" & Cells(8, col).Address & ") - " & vb
+            Case 3 ' Column C
+                Cells(10, col).Formula = "=SUM(" & Cells(7, col).Address & ":" & Cells(8, col).Address & ") - " & vc
+            Case 4 ' Column D
+                Cells(10, col).Formula = "=SUM(" & Cells(7, col).Address & ":" & Cells(8, col).Address & ") - " & vd
+            Case 5 ' Column E
+                Cells(10, col).Formula = "=SUM(" & Cells(7, col).Address & ":" & Cells(8, col).Address & ") - " & ve
+        End Select
+    Next col
+End Sub
