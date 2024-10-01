@@ -1,0 +1,18 @@
+Sub SaveAsMacroFreeWorkbook()
+    Dim newFilePath As String
+    
+    ' Define the path and name for the new workbook (change as needed)
+    newFilePath = ThisWorkbook.Path & "\MacroFreeWorkbook.xlsx"
+    
+    ' Save the current workbook as a macro-free workbook (.xlsx)
+    ThisWorkbook.SaveCopyAs newFilePath
+    
+    ' Open the new workbook (macro-free)
+    Workbooks.Open newFilePath
+    
+    ' Remove any VBA code (since .xlsx format does not support macros)
+    Workbooks(Workbooks.Count).SaveAs Filename:=newFilePath, FileFormat:=xlOpenXMLWorkbook
+    
+    ' Optionally close the original macro-enabled workbook without saving
+    ThisWorkbook.Close SaveChanges:=False
+End Sub
