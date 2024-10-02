@@ -75,4 +75,24 @@ Sub SaveAsMacroFreeWorkbookWithDate()
 End Sub
 
 
+try 3
+
+Sub SaveAsMacroFreeAndCloseOriginal()
+    Dim newFilePath As String
+    Dim currentWorkbook As Workbook
+    
+    ' Define the new file path for the macro-free .xlsx file
+    newFilePath = "C:\Users\YourFolder\NewFileName.xlsx"  ' Modify as needed
+
+    ' Reference the current workbook
+    Set currentWorkbook = ThisWorkbook
+    
+    ' Save the current workbook as a macro-free copy
+    currentWorkbook.SaveAs newFilePath, FileFormat:=xlOpenXMLWorkbook
+    
+    ' Close the original macro-enabled workbook without saving
+    currentWorkbook.Close SaveChanges:=False
+End Sub
+
+
 
