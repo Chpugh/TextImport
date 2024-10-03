@@ -1,20 +1,35 @@
 Sub ParseTextFileForSecurities()
     Dim FilePath As String
+    Dim FolderPath As String
     Dim TextLine As String
     Dim Securities As Variant
-    Dim CurrentSecurity As String
+    Dim CurrentSecurity As Variant
     Dim FileNum As Integer
     Dim Lines() As String
     Dim Pos As Integer
-    Dim AdmissionsValue As String
-    Dim WithdrawalsValue As String
+    Dim AdmissionsValue As Double
+    Dim WithdrawalsValue As Double
     Dim SecurityInfo As String
     Dim col As Integer
-    Dim sumUp As Integer
+    Dim sumUp As Double
     Dim Found As Boolean
+
     Dim unitPrice As String
-    Dim finalUnits As Double
-    Dim finalPrice As Double
+    Dim finalUnits As Variant
+    Dim finalPrice As Variant
+    Dim sumUnits As Variant
+    Dim sumPrice As Variant
+
+    Dim i As Integer
+    Dim Keyword As String
+    Dim Position As Long
+    Dim Units As Variant
+    Dim price As Variant
+    Dim TextAfterKeyword As String
+    Dim Values() As String
+    Keyword = "approved open order"
+
+    
 
     ' List of securities (S1, S2, S3, S4) - Correspond to columns B, C, D, E
     Securities = Array("S1", "S2", "S3", "S4")
