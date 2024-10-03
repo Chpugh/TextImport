@@ -199,13 +199,6 @@ EndProcess:
     Close FileNum
     End If
 Next i
-close FileNum
-
-
-
-    ' Reopen the text file to check for Admissions and Withdrawals
-    FileNum = FreeFile
-    Open FilePath For Input As FileNum
 
     ' Close the file
     Close FileNum
@@ -216,7 +209,6 @@ close FileNum
         If IsEmpty(Cells(8, col)) Then Cells(8, col).Value = 0
     Next col
     
-    ' Loop through columns B to E (2 to 5)
     For row10 = 2 To 5
         Select Case row10
             Case 2 ' Column B
@@ -256,7 +248,7 @@ close FileNum
 End Sub
 
 ' Helper function to extract the second number from the text line
-Function GetSecondNumber(ByVal TextLine As String, ByVal StartPos As Integer) As String
+Function GetSecondNumber(ByVal TextLine As String, ByVal StartPos As Integer) As Double
     Dim Parts As Variant
     Dim i As Integer
     Dim Counter As Integer
@@ -275,5 +267,5 @@ Function GetSecondNumber(ByVal TextLine As String, ByVal StartPos As Integer) As
         End If
     Next i
 
-    GetSecondNumber = "" ' Return empty string if no second number found
+    GetSecondNumber = 0 ' Return empty 0 if no second number found
 End Function
