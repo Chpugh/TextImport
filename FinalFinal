@@ -65,22 +65,32 @@ Sub ParseTextFileForSecurities()
     ' Close the file after reading
     Close FileNum
 
+    ' Loop through each line using a For loop
+    For i = LBound(Lines) To UBound(Lines)
+        TextLine = Lines(i)
+        
+        ' Loop through the securities to check if the current line contains one of them
+        For Each CurrentSecurity In Securities
+            If InStr(TextLine, CurrentSecurity) > 0 Then
+                Debug.Print "Currently on security: " & CurrentSecurity ' Prints to Immediate Window
+                Exit For
+            End If
+        Next CurrentSecurity
 
-
-    ' Loop through each security
-    For Each CurrentSecurity In Securities
-        ' Initialize variables for units and price for the current security
-        finalUnits = 0
-        finalPrice = 0
-        unitPrice = ""
-
-        ' Open the text file again to parse for open orders
-        FileNum = FreeFile
-        Open FilePath For Input As FileNum
+        ' changing security info variable
+        if CurrentSecuity <> "" then
+                SecurityInfo = ""
+                SecurityInfo = CurrentSecurity
+        End if
 
         ' Loop through each line in the file for open orders
-        Do Until EOF(FileNum)
-            Line Input #FileNum, TextLine
+        If SecurityInfo <> "" Then 
+
+            FileNum = FreeFile
+            Open FilePath For input As FileNum
+
+
+
             
             ' Check for the current security
             If InStr(TextLine, CurrentSecurity) > 0 Then
