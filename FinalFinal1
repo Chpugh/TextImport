@@ -1,0 +1,151 @@
+Sub ParseTextFileForSecurities()
+    Dim FilePath As String, FolderPath As String, TextLine As String, Securities As Variant
+    Dim CurrentSecurity As String, FileNum As Integer, Lines() As String, Keyword As String
+    Dim i As Integer, Position As Long, Units As Double, Price As Double, TextAfterKeyword As String
+    Dim Values() As String, AdmissionsValue As Double, WithdrawalsValue As Double
+    Dim sumUnits As Double, sumPrice As Double, finalUnits As Double, finalPrice As Double
+    Dim SecurityInfo As String, unitPrice As String
+    Dim vb As Double, vc As Double, vd As Double, ve As Double
+    Dim row10 As Integer, Found As Boolean
+
+    ' List of securities
+    Securities = Array("S1", "S2", "S3", "S4")
+    Keyword = "approved open order"
+
+    ' Set folder path and prompt file selection
+    FolderPath = "C:\path\to\your\folder"
+    FilePath = Application.GetOpenFilename("Text Files (*.txt), All Files (*.*), *.*", , "Select a File")
+    If FilePath = "False" Then Exit Sub ' Exit if no file selected
+
+    ' Read the text file
+    FileNum = FreeFile
+    Open FilePath For Input As FileNum
+    TextLine = Input$(LOF(FileNum), FileNum)
+    Lines = Split(TextLine, vbCrLf)
+    Close FileNum
+
+    ' Loop through each line
+    For i = LBound(Lines) To UBound(Lines)
+        TextLine = Lines(i)
+        
+        ' Find security
+        For Each CurrentSecurity In Securities
+            If InStr(TextLine, CurrentSecurity) > 0 Then
+                SecurityInfo = CurrentSecurity
+                Exit For
+            End If
+        Next CurrentSecurity
+        
+        ' Process keyword and numbers if security is found
+        If SecurityInfo <> "" Then
+            If InStr(TextLine, Keyword) > 0 Then
+                TextAfterKeyword = Mid(TextLine, InStr(TextLine, Keyword) + Len(Keyword))
+                Values = Split(Application.Trim(TextAfterKeyword), " ")
+                If IsNumeric(Values(0)) Then
+                    Units = CDbl(Values(0))
+                    Price = IIf(UBound(Values) > 0 And IsNumeric(Values(1)), CDbl(Values(1)), 0)
+                    sumUnits = finalUnits + Units: sumPrice = finalPrice + Price
+                    unitPrice = "-" & sumPrice & " / " & sumUnits
+                    
+                    ' Output to respective cells based on security
+                    Select Case SecurityInfo
+                        Case "S1": Cells(7, 2).Value = unitPrice
+                        Case "S2": Cells(7, 3).Value = unitPrice
+                        Case "S3": Cells(7, 4).Value = unitPrice
+                        Case "S4": Cells(7, 5).Value = unitPrice
+                    End Select
+
+                    finalUnits = sumUnits: finalPrice = sumPrice
+                End If
+            End If
+
+            ' Admissions and Withdrawals handling
+            If InStr(TextLine, "TOTAL ADMISSIONS:") > 0 Then
+                AdmissionsValue = GetSecondNumber(TextLine, Len("TOTAL ADMISSIONS:"))
+                AssignValueToColumn AdmissionsValue, SecurityInfo, 7
+            ElseIf InStr(TextLine, "TOTAL WITHDRAWALS:") > 0 Then
+                WithdrawalsValue = GetSecondNumber(TextLine, Len("TOTAL WITHDRAWALS:"))
+                AssignValueToColumn WithdrawalsValue, SecurityInfo, 8
+                StoreFinalPrice SecurityInfo, vb, vc, vd, ve, finalPrice
+                finalUnits = 0: finalPrice = 0
+            End If
+        End If
+    Next i
+    
+    ' Fill empty cells in rows 7 and 8 with 0
+    FillEmptyCells 7, 8
+    
+    ' Calculate totals for row 10
+    CalculateRow10 vb, vc, vd, ve
+
+    ' Check for "unapproved" keyword in the file
+    If CheckForKeyword(FilePath, "unapproved") Then
+        MsgBox "The word 'unapproved' was found in the text file.", vbInformation
+    Else
+        MsgBox "The word 'unapproved' was not found in the text file.", vbInformation
+    End If
+End Sub
+
+' Helper function to extract the second number from a line
+Function GetSecondNumber(ByVal TextLine As String, ByVal StartPos As Integer) As Double
+    Dim Parts As Variant, i As Integer, Counter As Integer
+    Parts = Split(Mid(TextLine, StartPos))
+    For i = LBound(Parts) To UBound(Parts)
+        If IsNumeric(Parts(i)) Then Counter = Counter + 1: If Counter = 2 Then GetSecondNumber = CDbl(Parts(i)): Exit Function
+    Next i
+    GetSecondNumber = 0
+End Function
+
+' Assign value to the correct column based on security
+Sub AssignValueToColumn(ByVal Value As Double, ByVal Security As String, ByVal Row As Integer)
+    Select Case Security
+        Case "S1": Cells(Row, 2).Value = -Value
+        Case "S2": Cells(Row, 3).Value = -Value
+        Case "S3": Cells(Row, 4).Value = -Value
+        Case "S4": Cells(Row, 5).Value = -Value
+    End Select
+End Sub
+
+' Store final price for each security
+Sub StoreFinalPrice(ByVal Security As String, ByRef vb As Double, ByRef vc As Double, ByRef vd As Double, ByRef ve As Double, ByVal FinalPrice As Double)
+    Select Case Security
+        Case "S1": vb = FinalPrice
+        Case "S2": vc = FinalPrice
+        Case "S3": vd = FinalPrice
+        Case "S4": ve = FinalPrice
+    End Select
+End Sub
+
+' Fill empty cells with 0 in the specified rows
+Sub FillEmptyCells(ByVal Row1 As Integer, ByVal Row2 As Integer)
+    Dim col As Integer
+    For col = 2 To 5
+        If IsEmpty(Cells(Row1, col)) Then Cells(Row1, col).Value = 0
+        If IsEmpty(Cells(Row2, col)) Then Cells(Row2, col).Value = 0
+    Next col
+End Sub
+
+' Calculate the sums for row 10
+Sub CalculateRow10(ByVal vb As Double, ByVal vc As Double, ByVal vd As Double, ByVal ve As Double)
+    Dim row10 As Integer
+    For row10 = 2 To 5
+        Select Case row10
+            Case 2: Cells(10, row10).Formula = "=SUM(B7:B8) - " & vb
+            Case 3: Cells(10, row10).Formula = "=SUM(C7:C8) - " & vc
+            Case 4: Cells(10, row10).Formula = "=SUM(D7:D8) - " & vd
+            Case 5: Cells(10, row10).Formula = "=SUM(E7:E8) - " & ve
+        End Select
+    Next row10
+End Sub
+
+' Check if a keyword is present in the file
+Function CheckForKeyword(ByVal FilePath As String, ByVal Keyword As String) As Boolean
+    Dim FileNum As Integer, TextLine As String
+    FileNum = FreeFile
+    Open FilePath For Input As FileNum
+    Do While Not EOF(FileNum)
+        Line Input #FileNum, TextLine
+        If InStr(1, TextLine, Keyword, vbTextCompare) > 0 Then CheckForKeyword = True: Exit Do
+    Loop
+    Close FileNum
+End Function
