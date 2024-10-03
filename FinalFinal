@@ -1,1 +1,181 @@
+Sub ParseTextFileForSecurities()
+    Dim FilePath As String
+    Dim TextLine As String
+    Dim Securities As Variant
+    Dim CurrentSecurity As String
+    Dim FileNum As Integer
+    Dim Lines() As String
+    Dim Pos As Integer
+    Dim AdmissionsValue As String
+    Dim WithdrawalsValue As String
+    Dim SecurityInfo As String
+    Dim col As Integer
+    Dim sumUp As Integer
+    Dim Found As Boolean
+    Dim unitPrice As String
+    Dim finalUnits As Double
+    Dim finalPrice As Double
 
+    ' List of securities (S1, S2, S3, S4) - Correspond to columns B, C, D, E
+    Securities = Array("S1", "S2", "S3", "S4")
+    
+    ' Set the folder path where the file is located
+    FilePath = Application.GetOpenFilename("Text Files (*.txt), All Files (*.*), *.*", , "Select a File")
+
+    ' Check if the user canceled
+    If FilePath = "False" Then
+        MsgBox "No file was selected.", vbExclamation
+        Exit Sub
+    Else
+        MsgBox "You selected: " & FilePath, vbInformation
+    End If 
+
+    ' Open the text file for reading
+    FileNum = FreeFile
+    Open FilePath For Input As FileNum
+    
+    ' Read all lines from the file into an array
+    TextLine = Input$(LOF(FileNum), FileNum)
+    Lines = Split(TextLine, vbCrLf)
+    
+    ' Close the file after reading
+    Close FileNum
+
+    ' Loop through each security
+    For Each CurrentSecurity In Securities
+        ' Initialize variables for units and price for the current security
+        finalUnits = 0
+        finalPrice = 0
+        unitPrice = ""
+
+        ' Open the text file again to parse for open orders
+        FileNum = FreeFile
+        Open FilePath For Input As FileNum
+
+        ' Loop through each line in the file for open orders
+        Do Until EOF(FileNum)
+            Line Input #FileNum, TextLine
+            
+            ' Check for the current security
+            If InStr(TextLine, CurrentSecurity) > 0 Then
+                ' Check for units and price
+                Dim Units As Double
+                Dim Price As Double
+                
+                ' Example extraction logic (you can replace this with your actual logic)
+                If InStr(TextLine, "approved open order") > 0 Then
+                    Dim Values() As String
+                    Values = Split(Application.Trim(TextLine), " ")
+                    
+                    If IsNumeric(Values(0)) Then
+                        Units = CDbl(Values(0))
+                        If UBound(Values) > 0 And IsNumeric(Values(1)) Then
+                            Price = CDbl(Values(1))
+                            finalUnits = finalUnits + Units
+                            finalPrice = finalPrice + Price
+                        End If
+                    End If
+                End If
+            End If
+        Loop
+        
+        ' Close the file
+        Close FileNum
+
+        ' Calculate unit price
+        If finalUnits <> 0 Then
+            unitPrice = finalPrice & " / " & finalUnits
+        End If
+
+        ' Store the unit price in row 9 for the current security
+        Cells(9, Application.Match(CurrentSecurity, Securities, 0) + 1).Value = unitPrice
+    Next CurrentSecurity
+
+    ' Reopen the text file to check for Admissions and Withdrawals
+    FileNum = FreeFile
+    Open FilePath For Input As FileNum
+
+    ' Loop through each line for admissions and withdrawals
+    Do Until EOF(FileNum)
+        Line Input #FileNum, TextLine
+
+        For Each CurrentSecurity In Securities
+            If InStr(TextLine, CurrentSecurity) > 0 Then
+                ' Check for "TOTAL ADMISSIONS:"
+                If InStr(TextLine, "TOTAL ADMISSIONS:") > 0 Then
+                    Pos = InStr(TextLine, "TOTAL ADMISSIONS:")
+                    AdmissionsValue = GetSecondNumber(TextLine, Pos + Len("TOTAL ADMISSIONS:"))
+                    Cells(7, Application.Match(CurrentSecurity, Securities, 0) + 1).Value = -AdmissionsValue
+                End If
+
+                ' Check for "TOTAL WITHDRAWALS:"
+                If InStr(TextLine, "TOTAL WITHDRAWALS:") > 0 Then
+                    Pos = InStr(TextLine, "TOTAL WITHDRAWALS:")
+                    WithdrawalsValue = GetSecondNumber(TextLine, Pos + Len("TOTAL WITHDRAWALS:"))
+                    Cells(8, Application.Match(CurrentSecurity, Securities, 0) + 1).Value = -WithdrawalsValue
+                End If
+            End If
+        Next CurrentSecurity
+    Loop
+
+    ' Close the file
+    Close FileNum
+
+    ' Fill empty cells in rows 7 and 8 with 0
+    For col = 2 To 5
+        If IsEmpty(Cells(7, col)) Then Cells(7, col).Value = 0
+        If IsEmpty(Cells(8, col)) Then Cells(8, col).Value = 0
+    Next col
+
+    ' Sum up values in row 10
+    For sumUp = 2 To 5
+        Cells(10, sumUp).Formula = "=SUM(" & Cells(7, sumUp).Address & ":" & Cells(8, sumUp).Address & ")"
+    Next sumUp
+
+    ' Check for "unapproved" in the file
+    FileNum = FreeFile
+    Open FilePath For Input As FileNum
+    Found = False
+
+    ' Loop through each line in the text file
+    Do While Not EOF(FileNum)
+        Line Input #FileNum, TextLine
+        If InStr(1, TextLine, "unapproved", vbTextCompare) > 0 Then
+            Found = True
+            Exit Do
+        End If
+    Loop
+
+    ' Close the file
+    Close FileNum
+
+    ' Message box based on whether "unapproved" was found or not
+    If Found Then
+        MsgBox "The word 'unapproved' was found in the text file.", vbInformation
+    Else
+        MsgBox "The word 'unapproved' was not found in the text file.", vbInformation
+    End If
+End Sub
+
+' Helper function to extract the second number from the text line
+Function GetSecondNumber(ByVal TextLine As String, ByVal StartPos As Integer) As String
+    Dim Parts As Variant
+    Dim i As Integer
+    Dim Counter As Integer
+
+    Parts = Split(Mid(TextLine, StartPos))
+    Counter = 0
+
+    ' Loop through the parts and return the second number found
+    For i = LBound(Parts) To UBound(Parts)
+        If IsNumeric(Parts(i)) Then
+            Counter = Counter + 1
+            If Counter = 2 Then
+                GetSecondNumber = Parts(i)
+                Exit Function
+            End If
+        End If
+    Next i
+
+    GetSecondNumber = "" ' Return empty string if no second number found
+End Function
