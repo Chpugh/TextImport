@@ -89,94 +89,123 @@ Sub ParseTextFileForSecurities()
             FileNum = FreeFile
             Open FilePath For input As FileNum
 
-
-
-            
-            ' Check for the current security
-            If InStr(TextLine, CurrentSecurity) > 0 Then
-                ' Check for units and price
-                Dim Units As Double
-                Dim Price As Double
-                
-                ' Example extraction logic (you can replace this with your actual logic)
-                If InStr(TextLine, "approved open order") > 0 Then
-                    Dim Values() As String
-                    Values = Split(Application.Trim(TextLine), " ")
+            If InStr(TextLine, KeyWord) > 0 Then
+    
+                ' Check if the line contains the keyword
+                Position = InStr(1, LineOfText, KeyWord, vbTextCompare)
+                If Position > 0 Then
+                    ' Extract the part of the line after the keyword
+                    TextAfterKeyword = Mid(LineOfText, Position + Len(KeyWord))
                     
+                    ' Split the remaining line by spaces (or any other delimiter if needed)
+                    Values = Split(Application.Trim(TextAfterKeyword), " ")
+                    
+                    ' Check if the first value after the keyword is numeric (Units)
                     If IsNumeric(Values(0)) Then
                         Units = CDbl(Values(0))
+    
+                        If Units = 0 Then GoTo EndProcess
+                        
+                        ' Check if the next value is numeric (Price)
                         If UBound(Values) > 0 And IsNumeric(Values(1)) Then
                             Price = CDbl(Values(1))
+                            
+                            ' Save Units and Price into finalUnits and finalPrice
+                            sumUnits = 0
+                            sumPrice = 0
+                            'This is for adding units and price on the same security 
+                            If finalUnits & finalPrice <> 0 Then 
+                                'add up the units and price
+                                sumUnits = finalUnits + Units
+                                sumPrice = finalPrice + Price 
+        
+                            'Calculate unitprice as "Price / Units"
+                            unitPrice = -sumPrice & " / " & sumUnits
+                            ElseIf finalUnits & finalPrice = 0 Then
+                                unitPrice = -Price & " / " & Units
+                            End if 
+        
                             finalUnits = finalUnits + Units
-                            finalPrice = finalPrice + Price
+                            finalPrice = finalPrice + Price 
+            
+                            Units = 0
+                            Price = 0
+        
+                            If SecurityInfo = "S1" Then
+                                Cells(7, 2).Value = (UnitPrice) ' Column B, Row 9
+                            ElseIf SecurityInfo = "S2" Then
+                                Cells(7, 3).Value = (UnitPrice) ' Column C, Row 9
+                            ElseIf SecurityInfo = "S3" Then
+                                Cells(7, 4).Value = (UnitPrice) ' Column D, Row 9
+                            ElseIf SecurityInfo = "S4" Then
+                                Cells(7, 5).Value = (UnitPrice) ' Column E, Row 9
+                            End If
                         End If
                     End If
                 End If
             End If
-        Loop
+EndProcess:
         
-        ' Close the file
-        Close FileNum
+    ' Close the file
+    Close FileNum
 
-        ' Calculate unit price
-        If finalUnits <> 0 Then
-            unitPrice = finalPrice & " / " & finalUnits
+    FileNum = FreeFile
+    Open FilePath For Input As FileNum
+
+        ' Check for "TOTAL ADMISSIONS:"
+        If InStr(TextLine, "TOTAL ADMISSIONS:") > 0 Then
+    
+            Pos = InStr(TextLine, "TOTAL ADMISSIONS:")
+    
+            ' Extract the second number after the keyword
+            AdmissionsValue = GetSecondNumber(TextLine, Pos + Len("TOTAL ADMISSIONS:"))
+    
+            ' Based on SecurityInfo, import into the appropriate column
+            If CurrentSecurity = "S1" Then
+                Cells(7, 2).Value = -(AdmissionsValue) ' Column B, Row 7
+            ElseIf SecurityInfo = "S2" Then
+                Cells(7, 3).Value = -(AdmissionsValue) ' Column C, Row 7
+            ElseIf SecurityInfo = "S3" Then
+                Cells(7, 4).Value = -(AdmissionsValue) ' Column D, Row 7
+            ElseIf SecurityInfo = "S4" Then
+                Cells(7, 5).Value = -(AdmissionsValue) ' Column E, Row 7
+            End If
+        End If
+        
+        ' Check for "TOTAL WITHDRAWALS:"
+        If InStr(TextLine, "TOTAL WITHDRAWALS:") > 0 Then
+            Pos = InStr(TextLine, "TOTAL WITHDRAWALS:")
+            ' Extract the second number after the keyword
+            WithdrawalsValue = GetSecondNumber(TextLine, Pos + Len("TOTAL WITHDRAWALS:"))
+            
+            ' Based on CurrentSecurity, import into the appropriate column
+            If SecurityInfo = "S1" Then
+                Cells(8, 2).Value = -(WithdrawalsValue) ' Column B, Row 8
+                vb = FinalPrice
+            ElseIf SecurityInfo = "S2" Then
+                Cells(8, 3).Value = -(WithdrawalsValue) ' Column C, Row 8
+                vc = FinalPrice
+            ElseIf SecurityInfo = "S3" Then
+                Cells(8, 4).Value = -(WithdrawalsValue) ' Column D, Row 8
+                vd = FinalPrice
+            ElseIf SecurityInfo = "S4" Then
+                Cells(8, 5).Value = -(WithdrawalsValue) ' Column E, Row 8
+                ve = FinalPrice
+            End If
+            finalPrice = 0
+            finalUnits = 0
         End If
 
-        ' Store the unit price in row 9 for the current security
-        Cells(9, Application.Match(CurrentSecurity, Securities, 0) + 1).Value = unitPrice
-    Next CurrentSecurity
+    Close FileNum
+    End If
+Next i
+close FileNum
+
+
 
     ' Reopen the text file to check for Admissions and Withdrawals
     FileNum = FreeFile
     Open FilePath For Input As FileNum
-
-    ' Loop through each line for admissions and withdrawals
-    Do Until EOF(FileNum)
-        Line Input #FileNum, TextLine
-
-        For Each CurrentSecurity In Securities
-            If InStr(TextLine, CurrentSecurity) > 0 Then
-                ' Check for "TOTAL ADMISSIONS:"
-                If InStr(TextLine, "TOTAL ADMISSIONS:") > 0 Then
-                    Pos = InStr(TextLine, "TOTAL ADMISSIONS:")
-                    ' Extract the second number after the keyword
-                    AdmissionsValue = GetSecondNumber(TextLine, Pos + Len("TOTAL ADMISSIONS:"))
-                    Debug.Print "Admissions for " & CurrentSecurity & ": " & AdmissionsValue
-                    
-                    ' Based on CurrentSecurity, import into the appropriate column
-                    If CurrentSecurity = "S1" Then
-                        Cells(7, 2).Value = -(AdmissionsValue) ' Column B, Row 7
-                    ElseIf CurrentSecurity = "S2" Then
-                        Cells(7, 3).Value = -(AdmissionsValue) ' Column C, Row 7
-                    ElseIf CurrentSecurity = "S3" Then
-                        Cells(7, 4).Value = -(AdmissionsValue) ' Column D, Row 7
-                    ElseIf CurrentSecurity = "S4" Then
-                        Cells(7, 5).Value = -(AdmissionsValue) ' Column E, Row 7
-                    End If
-                End If
-                
-                ' Check for "TOTAL WITHDRAWALS:"
-                If InStr(TextLine, "TOTAL WITHDRAWALS:") > 0 Then
-                    Pos = InStr(TextLine, "TOTAL WITHDRAWALS:")
-                    ' Extract the second number after the keyword
-                    WithdrawalsValue = GetSecondNumber(TextLine, Pos + Len("TOTAL WITHDRAWALS:"))
-                    Debug.Print "Withdrawals for " & CurrentSecurity & ": " & WithdrawalsValue
-                    
-                    ' Based on CurrentSecurity, import into the appropriate column
-                    If CurrentSecurity = "S1" Then
-                        Cells(8, 2).Value = -(WithdrawalsValue) ' Column B, Row 8
-                    ElseIf CurrentSecurity = "S2" Then
-                        Cells(8, 3).Value = -(WithdrawalsValue) ' Column C, Row 8
-                    ElseIf CurrentSecurity = "S3" Then
-                        Cells(8, 4).Value = -(WithdrawalsValue) ' Column D, Row 8
-                    ElseIf CurrentSecurity = "S4" Then
-                        Cells(8, 5).Value = -(WithdrawalsValue) ' Column E, Row 8
-                    End If
-                End If
-            End If
-        Next CurrentSecurity
-    Loop
 
     ' Close the file
     Close FileNum
