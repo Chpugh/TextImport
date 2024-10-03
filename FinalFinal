@@ -29,10 +29,15 @@ Sub ParseTextFileForSecurities()
     Dim Values() As String
     Keyword = "approved open order"
 
-    
+    Dim vb As Double, vc As Double, vd As Double, ve As Double
+    Dim row10 As Integer
+
+    close
 
     ' List of securities (S1, S2, S3, S4) - Correspond to columns B, C, D, E
     Securities = Array("S1", "S2", "S3", "S4")
+
+    
     
     ' Set the folder path where the file is located
     FilePath = Application.GetOpenFilename("Text Files (*.txt), All Files (*.*), *.*", , "Select a File")
@@ -141,11 +146,20 @@ Sub ParseTextFileForSecurities()
         If IsEmpty(Cells(7, col)) Then Cells(7, col).Value = 0
         If IsEmpty(Cells(8, col)) Then Cells(8, col).Value = 0
     Next col
-
-    ' Sum up values in row 10
-    For sumUp = 2 To 5
-        Cells(10, sumUp).Formula = "=SUM(" & Cells(7, sumUp).Address & ":" & Cells(8, sumUp).Address & ")"
-    Next sumUp
+    
+    ' Loop through columns B to E (2 to 5)
+    For row10 = 2 To 5
+        Select Case row10
+            Case 2 ' Column B
+                Cells(10, row10).Formula = "=SUM(" & Cells(7, row10).Address & ":" & Cells(8, row10).Address & ") - " & vb
+            Case 3 ' Column C
+                Cells(10, row10).Formula = "=SUM(" & Cells(7, row10).Address & ":" & Cells(8, row10).Address & ") - " & vc
+            Case 4 ' Column D
+                Cells(10, row10).Formula = "=SUM(" & Cells(7, row10).Address & ":" & Cells(8, row10).Address & ") - " & vd
+            Case 5 ' Column E
+                Cells(10, row10).Formula = "=SUM(" & Cells(7, row10).Address & ":" & Cells(8, row10).Address & ") - " & ve
+        End Select
+    Next row10
 
     ' Check for "unapproved" in the file
     FileNum = FreeFile
