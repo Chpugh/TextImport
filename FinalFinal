@@ -37,7 +37,13 @@ Sub ParseTextFileForSecurities()
     ' List of securities (S1, S2, S3, S4) - Correspond to columns B, C, D, E
     Securities = Array("S1", "S2", "S3", "S4")
 
+    ' Set the folder path where the file is located
+    FolderPath = "C:\path\to\your\folder"
     
+    ' Change the current directory to the specified folder
+    On Error Resume Next ' If the folder does not exist, handle the error
+    ChDir FolderPath
+    On Error GoTo 0 ' Re-enable normal error handling
     
     ' Set the folder path where the file is located
     FilePath = Application.GetOpenFilename("Text Files (*.txt), All Files (*.*), *.*", , "Select a File")
@@ -46,8 +52,6 @@ Sub ParseTextFileForSecurities()
     If FilePath = "False" Then
         MsgBox "No file was selected.", vbExclamation
         Exit Sub
-    Else
-        MsgBox "You selected: " & FilePath, vbInformation
     End If 
 
     ' Open the text file for reading
@@ -60,6 +64,8 @@ Sub ParseTextFileForSecurities()
     
     ' Close the file after reading
     Close FileNum
+
+
 
     ' Loop through each security
     For Each CurrentSecurity In Securities
