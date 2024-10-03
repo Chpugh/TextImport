@@ -43,22 +43,23 @@ Sub ParseTextFileForSecurities()
                 Values = Split(Application.Trim(TextAfterKeyword), " ")
                 If IsNumeric(Values(0)) Then
                     Units = CDbl(Values(0))
+										If Units = Then GoTo EndProcess
                     Price = IIf(UBound(Values) > 0 And IsNumeric(Values(1)), CDbl(Values(1)), 0)
                     sumUnits = finalUnits + Units: sumPrice = finalPrice + Price
                     unitPrice = "-" & sumPrice & " / " & sumUnits
                     
                     ' Output to respective cells based on security
                     Select Case SecurityInfo
-                        Case "S1": Cells(7, 2).Value = unitPrice
-                        Case "S2": Cells(7, 3).Value = unitPrice
-                        Case "S3": Cells(7, 4).Value = unitPrice
-                        Case "S4": Cells(7, 5).Value = unitPrice
+                        Case "S1": Cells(9, 2).Value = unitPrice
+                        Case "S2": Cells(9, 3).Value = unitPrice
+                        Case "S3": Cells(9, 4).Value = unitPrice
+                        Case "S4": Cells(9, 5).Value = unitPrice
                     End Select
 
                     finalUnits = sumUnits: finalPrice = sumPrice
                 End If
             End If
-
+EndProcess:
             ' Admissions and Withdrawals handling
             If InStr(TextLine, "TOTAL ADMISSIONS:") > 0 Then
                 AdmissionsValue = GetSecondNumber(TextLine, Len("TOTAL ADMISSIONS:"))
