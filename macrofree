@@ -128,4 +128,41 @@ Sub ParseTextFileForSecurities()
 End Sub
 
 
+try 5
+
+Sub ParseTextFileForSecurities()
+    ' Your existing code...
+
+    ' Check for "unapproved" keyword in the file
+    If CheckForKeyword(FilePath, "unapproved") Then
+        MsgBox "The word 'unapproved' was found in the text file.", vbInformation
+    Else
+        MsgBox "The word 'unapproved' was not found in the text file.", vbInformation
+    End If
+
+    ' Save a macro-free copy of the workbook
+    Dim NewFilePath As String
+    Dim CurrentWorkbook As Workbook
+    Set CurrentWorkbook = ThisWorkbook
+    
+    ' Set the path for the new workbook with current date in the file name
+    NewFilePath = CurrentWorkbook.Path & "\" & Left(CurrentWorkbook.Name, InStrRev(CurrentWorkbook.Name, ".") - 1) & "_" & Format(Date, "yyyy-mm-dd") & ".xlsx"
+    
+    ' Save the current workbook as a copy in .xlsm (macro-enabled format) temporarily
+    CurrentWorkbook.SaveCopyAs NewFilePath
+    
+    ' Open the new workbook and save it as a macro-free file (.xlsx)
+    Dim NewWorkbook As Workbook
+    Set NewWorkbook = Workbooks.Open(NewFilePath)
+    
+    ' Now save it as a macro-free workbook
+    Application.DisplayAlerts = False
+    NewWorkbook.SaveAs Filename:=NewFilePath, FileFormat:=xlOpenXMLWorkbook ' xlsx format
+    Application.DisplayAlerts = True
+    
+    ' Close the newly created workbook
+    NewWorkbook.Close SaveChanges:=False
+End Sub
+
+
 
