@@ -65,7 +65,7 @@ EndProcess:
                 AdmissionsValue = GetSecondNumber(TextLine, Len("TOTAL ADMISSIONS:"))
                 AssignValueToColumn AdmissionsValue, SecurityInfo, 7
             ElseIf InStr(TextLine, "TOTAL WITHDRAWALS:") > 0 Then
-                WithdrawalsValue = GetSecondNumber(TextLine, Len("TOTAL WITHDRAWALS:"))
+                WithdrawalsValue = GetSecondNumber(TextLine, Len("TOTAL WITHDRAWALS:")) - FinalPrice
                 AssignValueToColumn WithdrawalsValue, SecurityInfo, 8
                 StoreFinalPrice SecurityInfo, vb, vc, vd, ve, finalPrice
                 finalUnits = 0: finalPrice = 0
