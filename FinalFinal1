@@ -43,7 +43,7 @@ Sub ParseTextFileForSecurities()
                 Values = Split(Application.Trim(TextAfterKeyword), " ")
                 If IsNumeric(Values(0)) Then
                     Units = CDbl(Values(0))
-										If Units = Then GoTo EndProcess
+		If Units = Then GoTo EndProcess
                     Price = IIf(UBound(Values) > 0 And IsNumeric(Values(1)), CDbl(Values(1)), 0)
                     sumUnits = finalUnits + Units: sumPrice = finalPrice + Price
                     unitPrice = "-" & sumPrice & " / " & sumUnits
