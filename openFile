@@ -60,3 +60,29 @@ Sub OpenTextFile()
         ' Now you can proceed with your file processing code here
     End If
 End Sub
+
+
+
+
+Sub OpenTextFile()
+    Dim filePath As String
+    Dim filter As String
+    
+    ' Set the file filter for text files
+    filter = "Text Files (*.txt), *.txt"
+    
+    ' Change directory to the desired folder
+    ChDrive "C"
+    ChDir "C:\Your\Folder\Path\"
+    
+    ' Open file dialog with the specified filter
+    filePath = Application.GetOpenFilename(FileFilter:=filter, Title:="Select a Text File")
+    
+    ' Check if the user canceled the dialog
+    If filePath = "False" Then
+        MsgBox "No file selected."
+    Else
+        MsgBox "File selected: " & filePath
+        ' Now you can proceed with your file processing code here
+    End If
+End Sub
