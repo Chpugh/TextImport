@@ -38,3 +38,25 @@ Sub PickFileFromSpecificFolder()
         MsgBox "No file was selected.", vbExclamation
     End If
 End Sub
+
+
+
+
+Sub OpenTextFile()
+    Dim filePath As String
+    Dim filter As String
+    
+    ' Set the file filter for text files
+    filter = "Text Files (*.txt), *.txt"
+    
+    ' Open file dialog with the specified filter and initial folder
+    filePath = Application.GetOpenFilename(FileFilter:=filter, Title:="Select a Text File", InitialFileName:="C:\Your\Folder\Path\")
+    
+    ' Check if the user canceled the dialog
+    If filePath = "False" Then
+        MsgBox "No file selected."
+    Else
+        MsgBox "File selected: " & filePath
+        ' Now you can proceed with your file processing code here
+    End If
+End Sub
