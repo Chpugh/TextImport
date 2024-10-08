@@ -1,0 +1,15 @@
+Sub DeleteFormControlButton()
+    Dim btn As Button
+    Dim ws As Worksheet
+
+    ' Set the worksheet where the button is located
+    Set ws = ThisWorkbook.Sheets("Sheet1") ' Change "Sheet1" to your sheet name
+
+    ' Loop through all the buttons in the worksheet
+    For Each btn In ws.Buttons
+        If btn.Caption = "Button 1" Then ' Change "Button 1" to the name of your button
+            btn.Delete
+            Exit For ' Exit after deleting the button
+        End If
+    Next btn
+End Sub
