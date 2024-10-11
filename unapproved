@@ -35,3 +35,41 @@ Sub FindUnapprovedInTextFile()
         MsgBox "The word 'unapproved' was not found in the text file.", vbInformation
     End If
 End Sub
+
+
+Sub CountUnapproved()
+    Dim filePath As String
+    Dim fileNum As Integer
+    Dim fileContent As String
+    Dim unapprovedCount As Integer
+    Dim lineOfText As String
+    
+    ' Set the file path
+    filePath = "C:\path\to\your\file.txt" ' Replace with your actual file path
+    
+    ' Open the file for reading
+    fileNum = FreeFile
+    Open filePath For Input As #fileNum
+    
+    ' Initialize counter
+    unapprovedCount = 0
+    
+    ' Loop through each line in the file
+    Do While Not EOF(fileNum)
+        Line Input #fileNum, lineOfText
+        
+        ' Convert line to lowercase to ensure case-insensitive search
+        lineOfText = LCase(lineOfText)
+        
+        ' Check if "unapproved" is found in the line and count occurrences
+        If InStr(lineOfText, "unapproved") > 0 Then
+            unapprovedCount = unapprovedCount + (Len(lineOfText) - Len(Replace(lineOfText, "unapproved", ""))) / Len("unapproved")
+        End If
+    Loop
+    
+    ' Close the file
+    Close #fileNum
+    
+    ' Display the count to the user
+    MsgBox "The word 'unapproved' was found " & unapprovedCount & " time(s) in the file."
+End Sub
