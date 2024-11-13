@@ -1,0 +1,39 @@
+Sub CreateEmailWithAttachment()
+    Dim OutlookApp As Object
+    Dim OutlookMail As Object
+    Dim FilePath As String
+    
+    ' Set the file path of the attachment
+    FilePath = "C:\path\to\your\file.xlsx" ' Update with the path to your file
+    
+    ' Check if the file exists
+    If Dir(FilePath) = "" Then
+        MsgBox "The file does not exist.", vbExclamation
+        Exit Sub
+    End If
+
+    ' Create an instance of Outlook
+    On Error Resume Next
+    Set OutlookApp = GetObject(Class:="Outlook.Application")
+    If OutlookApp Is Nothing Then
+        Set OutlookApp = CreateObject(Class:="Outlook.Application")
+    End If
+    On Error GoTo 0
+
+    ' Create a new email item
+    Set OutlookMail = OutlookApp.CreateItem(0) ' 0 represents olMailItem
+
+    ' Set email properties
+    With OutlookMail
+        .To = "recipient@example.com" ' Set the recipient's email address
+        .CC = "ccrecipient@example.com" ' Set the CC recipient's email address
+        .Subject = "Subject of the Email"
+        .Body = "This is the body of the email."
+        .Attachments.Add FilePath ' Attach the specified file
+        .Display ' Display the email as a draft
+    End With
+
+    ' Clean up
+    Set OutlookMail = Nothing
+    Set OutlookApp = Nothing
+End Sub
